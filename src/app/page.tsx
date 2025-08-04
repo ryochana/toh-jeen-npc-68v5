@@ -274,8 +274,8 @@ export default function TableBookingPage() {
               </div>
             </div>
 
-            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
+            <div className="grid grid-cols-2 gap-3" style={{ paddingTop: '80px' }}>
               {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
@@ -311,7 +311,7 @@ export default function TableBookingPage() {
               <div className="w-6 h-96 bg-orange-500 rounded-full"></div>
             </div>
 
-            {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว */}
+            {/* ฝั่งขวา (โต๊ะ 42-65) - 3 คอลัมน์ 8 แถว */}
             <div className="grid grid-cols-3 gap-3">
               {/* แถวบนสุด: 42, 43, 44 */}
               {[42,43,44].map((tableNum) => {
@@ -343,12 +343,12 @@ export default function TableBookingPage() {
                 )
               })}
               
-              {/* แถวที่ 2: 42, 43, 44 (ซ้ำ) */}
-              {[42,43,44].map((tableNum) => {
+              {/* แถวที่ 2: 63, 64, 65 (เลขใหม่) */}
+              {[63,64,65].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
                   <button
-                    key={`row2-${tableNum}`}
+                    key={tableNum}
                     onClick={() => {
                       if (table?.is_booked) {
                         if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
@@ -373,7 +373,7 @@ export default function TableBookingPage() {
                 )
               })}
 
-              {/* แถวที่ 3-7: 45-62 */}
+              {/* แถวที่ 3-8: 45-62 */}
               {[45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
