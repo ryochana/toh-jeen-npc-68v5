@@ -15,5 +15,6 @@ export interface TableBooking {
   booking_date: string
   notes?: string
   zone: 'inside' | 'outside'
+  payment_status?: 'booked' | 'paid'
   created_at?: string
 }

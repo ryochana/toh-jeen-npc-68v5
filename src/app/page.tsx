@@ -19,7 +19,7 @@ export default function TableBookingPage() {
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // สร้างข้อมูลโต๊ะทั้งหมดตามรูป (1-62 โต๊ะ)
+  // สร้างข้อมูลโต๊ะทั้งหมดตามรูป (1-65 โต๊ะ)
   const initializeTables = (): TableInfo[] => {
     const tableData: TableInfo[] = []
     
@@ -33,8 +33,8 @@ export default function TableBookingPage() {
       })
     }
     
-    // โต๊ะด้านนอก (42-62)
-    for (let i = 42; i <= 62; i++) {
+    // โต๊ะด้านนอก (42-65)
+    for (let i = 42; i <= 65; i++) {
       tableData.push({
         table_number: i,
         zone: 'outside',
@@ -76,20 +76,36 @@ export default function TableBookingPage() {
     }
   }
 
-  // บันทึกการจองใหม่
+  // บันทึกการจองใหม่หรือแก้ไข
   const handleBooking = async (bookingData: Omit<TableBooking, 'id' | 'created_at'>) => {
     try {
-      const { data, error } = await supabase
-        .from('table_bookings')
-        .insert([bookingData])
-        .select()
+      // ตรวจสอบว่ามีการจองอยู่แล้วหรือไม่
+      const existingBooking = tables.find(t => t.table_number === bookingData.table_number)?.booking
       
-      if (error) throw error
+      if (existingBooking) {
+        // แก้ไขการจองเดิม
+        const { data, error } = await supabase
+          .from('table_bookings')
+          .update(bookingData)
+          .eq('table_number', bookingData.table_number)
+          .select()
+        
+        if (error) throw error
+        alert('แก้ไขข้อมูลการจองสำเร็จ!')
+      } else {
+        // จองใหม่
+        const { data, error } = await supabase
+          .from('table_bookings')
+          .insert([bookingData])
+          .select()
+        
+        if (error) throw error
+        alert('จองโต๊ะสำเร็จ!')
+      }
       
       await loadBookings() // รีโหลดข้อมูล
       setShowBookingForm(false)
       setSelectedTable(null)
-      alert('จองโต๊ะสำเร็จ!')
     } catch (error) {
       console.error('Error booking table:', error)
       alert('เกิดข้อผิดพลาดในการจองโต๊ะ')
@@ -116,8 +132,8 @@ export default function TableBookingPage() {
     }
   }
 
-  // Export ข้อมูลเป็น CSV
-  const exportToCSV = async () => {
+  // Export ข้อมูลเป็น Excel
+  const exportToExcel = async () => {
     try {
       const response = await fetch('/api/export')
       if (!response.ok) throw new Error('Export failed')
@@ -127,7 +143,7 @@ export default function TableBookingPage() {
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `รายการจองโต๊ะ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.csv`
+      a.download = `รายการจองโต๊ะ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -216,10 +232,10 @@ export default function TableBookingPage() {
           {/* Controls */}
           <div className="flex justify-center space-x-4 mb-8">
             <button
-              onClick={exportToCSV}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold"
+              onClick={exportToExcel}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-bold"
             >
-              📊 Export CSV
+              📊 Export Excel
             </button>
             <button
               onClick={loadBookings}
@@ -234,35 +250,40 @@ export default function TableBookingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center items-start space-x-4 mb-8">
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
-            <div className="grid grid-cols-3 gap-3">
-              {Array.from({length: 27}, (_, i) => i + 1).map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      if (table?.is_booked) {
-                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
-                          handleCancelBooking(tableNum)
-                        }
-                      } else {
+            <div className="text-center">
+              <h3 className="text-white text-xl font-bold mb-4 bg-blue-600 px-4 py-2 rounded-lg">
+                ด้านนอกหอประชุม
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                {Array.from({length: 27}, (_, i) => i + 1).map((tableNum) => {
+                  const table = tables.find(t => t.table_number === tableNum)
+                  const getTableColor = () => {
+                    if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
+                    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+                    return 'bg-orange-500 hover:bg-orange-600'
+                  }
+                  
+                  return (
+                    <button
+                      key={tableNum}
+                      onClick={() => {
                         setSelectedTable(tableNum)
                         setShowBookingForm(true)
+                      }}
+                      className={`
+                        w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                        ${getTableColor()}
+                      `}
+                      title={table?.is_booked ? 
+                        `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
+                        'คลิกเพื่อจอง'
                       }
-                    }}
-                    className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
-                      ${table?.is_booked 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-purple-400 hover:bg-purple-500'
-                      }
-                    `}
-                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
-                  >
-                    {tableNum}
-                  </button>
-                )
-              })}
+                    >
+                      {tableNum}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* ทางเดิน 1 */}
@@ -275,29 +296,41 @@ export default function TableBookingPage() {
             </div>
 
             {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-3" style={{ paddingTop: '80px' }}>
-              {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      if (table?.is_booked) {
-                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
-                          handleCancelBooking(tableNum)
-                        }
-                      } else {
+            <div className="text-center">
+              <h3 className="text-white text-xl font-bold mb-4 bg-red-600 px-4 py-2 rounded-lg">
+                ด้านในหอประชุม
+              </h3>
+              <div className="grid grid-cols-2 gap-3" style={{ paddingTop: '80px' }}>
+                {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
+                  const table = tables.find(t => t.table_number === tableNum)
+                  const getTableColor = () => {
+                    if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
+                    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+                    return 'bg-orange-500 hover:bg-orange-600'
+                  }
+                  
+                  return (
+                    <button
+                      key={tableNum}
+                      onClick={() => {
                         setSelectedTable(tableNum)
                         setShowBookingForm(true)
+                      }}
+                      className={`
+                        w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                        ${getTableColor()}
+                      `}
+                      title={table?.is_booked ? 
+                        `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
+                        'คลิกเพื่อจอง'
                       }
-                    }}
-                    className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
-                      ${table?.is_booked 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-purple-400 hover:bg-purple-500'
-                      }
-                    `}
+                    >
+                      {tableNum}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
                     title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
                   >
                     {tableNum}
@@ -312,96 +345,101 @@ export default function TableBookingPage() {
             </div>
 
             {/* ฝั่งขวา (โต๊ะ 42-65) - 3 คอลัมน์ 8 แถว */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* แถวบนสุด: 42, 43, 44 */}
-              {[42,43,44].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      if (table?.is_booked) {
-                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
-                          handleCancelBooking(tableNum)
-                        }
-                      } else {
+            <div className="text-center">
+              <h3 className="text-white text-xl font-bold mb-4 bg-blue-600 px-4 py-2 rounded-lg">
+                ด้านนอกหอประชุม
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                {/* แถวบนสุด: 42, 43, 44 */}
+                {[42,43,44].map((tableNum) => {
+                  const table = tables.find(t => t.table_number === tableNum)
+                  const getTableColor = () => {
+                    if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
+                    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+                    return 'bg-orange-500 hover:bg-orange-600'
+                  }
+                  
+                  return (
+                    <button
+                      key={tableNum}
+                      onClick={() => {
                         setSelectedTable(tableNum)
                         setShowBookingForm(true)
+                      }}
+                      className={`
+                        w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                        ${getTableColor()}
+                      `}
+                      title={table?.is_booked ? 
+                        `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
+                        'คลิกเพื่อจอง'
                       }
-                    }}
-                    className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
-                      ${table?.is_booked 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-purple-400 hover:bg-purple-500'
-                      }
-                    `}
-                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
-                  >
-                    {tableNum}
-                  </button>
-                )
-              })}
-              
-              {/* แถวที่ 2: 63, 64, 65 (เลขใหม่) */}
-              {[63,64,65].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      if (table?.is_booked) {
-                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
-                          handleCancelBooking(tableNum)
-                        }
-                      } else {
+                    >
+                      {tableNum}
+                    </button>
+                  )
+                })}
+                
+                {/* แถวที่ 2: 63, 64, 65 (เลขใหม่) */}
+                {[63,64,65].map((tableNum) => {
+                  const table = tables.find(t => t.table_number === tableNum)
+                  const getTableColor = () => {
+                    if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
+                    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+                    return 'bg-orange-500 hover:bg-orange-600'
+                  }
+                  
+                  return (
+                    <button
+                      key={tableNum}
+                      onClick={() => {
                         setSelectedTable(tableNum)
                         setShowBookingForm(true)
+                      }}
+                      className={`
+                        w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                        ${getTableColor()}
+                      `}
+                      title={table?.is_booked ? 
+                        `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
+                        'คลิกเพื่อจอง'
                       }
-                    }}
-                    className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
-                      ${table?.is_booked 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-purple-400 hover:bg-purple-500'
-                      }
-                    `}
-                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
-                  >
-                    {tableNum}
-                  </button>
-                )
-              })}
+                    >
+                      {tableNum}
+                    </button>
+                  )
+                })}
 
-              {/* แถวที่ 3-8: 45-62 */}
-              {[45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      if (table?.is_booked) {
-                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
-                          handleCancelBooking(tableNum)
-                        }
-                      } else {
+                {/* แถวที่ 3-8: 45-62 */}
+                {[45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
+                  const table = tables.find(t => t.table_number === tableNum)
+                  const getTableColor = () => {
+                    if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
+                    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+                    return 'bg-orange-500 hover:bg-orange-600'
+                  }
+                  
+                  return (
+                    <button
+                      key={tableNum}
+                      onClick={() => {
                         setSelectedTable(tableNum)
                         setShowBookingForm(true)
+                      }}
+                      className={`
+                        w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                        ${getTableColor()}
+                      `}
+                      title={table?.is_booked ? 
+                        `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
+                        'คลิกเพื่อจอง'
                       }
-                    }}
-                    className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
-                      ${table?.is_booked 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-purple-400 hover:bg-purple-500'
-                      }
-                    `}
-                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
-                  >
-                    {tableNum}
-                  </button>
-                )
-              })}
+                    >
+                      {tableNum}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -446,14 +484,19 @@ export default function TableBookingPage() {
         {/* Status Info */}
         <div className="fixed top-4 right-4 bg-black bg-opacity-50 text-white p-4 rounded-lg">
           <div>จำนวนโต๊ะที่จองแล้ว: {bookings.length} โต๊ะ</div>
+          <div>จำนวนโต๊ะที่จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length} โต๊ะ</div>
           <div className="mt-2 space-y-1">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-purple-400 rounded-full"></div>
               <span className="text-sm">โต๊ะว่าง</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-              <span className="text-sm">โต๊ะที่จองแล้ว</span>
+              <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+              <span className="text-sm">จองแล้ว</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+              <span className="text-sm">จ่ายแล้ว</span>
             </div>
           </div>
         </div>
@@ -464,11 +507,13 @@ export default function TableBookingPage() {
         <BookingModal
           tableNumber={selectedTable}
           zone={selectedTable <= 41 ? 'inside' : 'outside'}
+          existingBooking={tables.find(t => t.table_number === selectedTable)?.booking}
           onSubmit={handleBooking}
           onClose={() => {
             setShowBookingForm(false)
             setSelectedTable(null)
           }}
+          onDelete={handleCancelBooking}
         />
       )}
     </div>
@@ -480,18 +525,23 @@ function BookingModal({
   tableNumber, 
   zone, 
   onSubmit, 
-  onClose 
+  onClose,
+  onDelete,
+  existingBooking
 }: {
   tableNumber: number
   zone: 'inside' | 'outside'
   onSubmit: (data: Omit<TableBooking, 'id' | 'created_at'>) => void
   onClose: () => void
+  onDelete: (tableNumber: number) => void
+  existingBooking?: TableBooking
 }) {
   const [formData, setFormData] = useState({
-    guest_name: '',
-    phone_number: '',
-    party_size: 8,
-    notes: ''
+    guest_name: existingBooking?.guest_name || '',
+    phone_number: existingBooking?.phone_number || '',
+    party_size: existingBooking?.party_size || 8,
+    payment_status: (existingBooking?.payment_status || 'booked') as 'booked' | 'paid',
+    notes: existingBooking?.notes || ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -507,7 +557,8 @@ function BookingModal({
       guest_name: formData.guest_name.trim(),
       phone_number: formData.phone_number.trim(),
       party_size: formData.party_size,
-      booking_date: new Date().toISOString(),
+      payment_status: formData.payment_status,
+      booking_date: existingBooking?.booking_date || new Date().toISOString(),
       notes: formData.notes.trim(),
       zone
     })
@@ -517,7 +568,7 @@ function BookingModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
         <h3 className="text-xl font-bold mb-4 text-gray-800">
-          จองโต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
+          {existingBooking ? 'แก้ไข' : 'จอง'}โต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -556,6 +607,34 @@ function BookingModal({
               className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">สถานะการชำระ *</label>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="payment_status"
+                  value="booked"
+                  checked={formData.payment_status === 'booked'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, payment_status: e.target.value as 'booked' | 'paid' }))}
+                  className="mr-2"
+                />
+                <span className="text-orange-600">จองเฉยๆ</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="payment_status"
+                  value="paid"
+                  checked={formData.payment_status === 'paid'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, payment_status: e.target.value as 'booked' | 'paid' }))}
+                  className="mr-2"
+                />
+                <span className="text-green-600">จ่ายแล้ว</span>
+              </label>
+            </div>
+          </div>
           
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">หมายเหตุ</label>
@@ -576,11 +655,25 @@ function BookingModal({
             >
               ยกเลิก
             </button>
+            {existingBooking && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('คุณต้องการลบการจองนี้หรือไม่?')) {
+                    onDelete(tableNumber)
+                    onClose()
+                  }
+                }}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                ลบการจอง
+              </button>
+            )}
             <button
               type="submit"
               className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
             >
-              จองโต๊ะ (2,000 บาท)
+              {existingBooking ? 'บันทึกการแก้ไข' : 'จองโต๊ะ (2,000 บาท)'}
             </button>
           </div>
         </form>

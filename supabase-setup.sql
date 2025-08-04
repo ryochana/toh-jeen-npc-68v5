@@ -10,13 +10,18 @@ CREATE TABLE IF NOT EXISTS table_bookings (
   booking_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   notes TEXT,
   zone TEXT NOT NULL CHECK (zone IN ('inside', 'outside')),
+  payment_status TEXT NOT NULL DEFAULT 'booked' CHECK (payment_status IN ('booked', 'paid')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- เพิ่ม index เพื่อ performance
 CREATE INDEX IF NOT EXISTS idx_table_bookings_table_number ON table_bookings(table_number);
 CREATE INDEX IF NOT EXISTS idx_table_bookings_zone ON table_bookings(zone);
+CREATE INDEX IF NOT EXISTS idx_table_bookings_payment_status ON table_bookings(payment_status);
 CREATE INDEX IF NOT EXISTS idx_table_bookings_booking_date ON table_bookings(booking_date);
+
+-- อัปเดตข้อมูลเดิม (กรณีที่ตารางมีอยู่แล้ว)
+ALTER TABLE table_bookings ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'booked' CHECK (payment_status IN ('booked', 'paid'));
 
 -- เพิ่ม Row Level Security (RLS)
 ALTER TABLE table_bookings ENABLE ROW LEVEL SECURITY;
