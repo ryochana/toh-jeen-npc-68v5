@@ -207,12 +207,12 @@ export default function TableBookingPage() {
       </div>
 
       {/* String Lights */}
-      <div className="absolute top-0 left-0 right-0 h-20 flex items-center justify-center overflow-hidden">
-        <div className="flex space-x-8">
+      <div className="absolute top-0 left-0 right-0 h-12 lg:h-20 flex items-center justify-center overflow-hidden">
+        <div className="flex space-x-4 lg:space-x-8">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
-              className="w-3 h-3 rounded-full bg-white animate-pulse"
+              className="w-2 h-2 lg:w-3 lg:h-3 rounded-full bg-white animate-pulse"
               style={{
                 animationDelay: `${i * 0.2}s`,
                 backgroundColor: i % 3 === 0 ? '#fff' : i % 3 === 1 ? '#ffd700' : '#ff69b4'
@@ -222,54 +222,59 @@ export default function TableBookingPage() {
         </div>
       </div>
 
-      <div className="relative z-10 p-4">
+      <div className="relative z-10 p-2 lg:p-4">
         {/* Header */}
-        <div className="text-center mb-8 mt-16">
-          <div className="flex justify-center items-center mb-4">
-            <div className="text-pink-300 text-2xl mr-2">รวม❤️</div>
-            <div className="text-pink-400 text-4xl font-bold">ศิษย์เก่า</div>
+        <div className="text-center mb-4 lg:mb-8 mt-16 px-4">
+          <div className="flex justify-center items-center mb-2 lg:mb-4">
+            <div className="text-pink-300 text-lg lg:text-2xl mr-2">รวม❤️</div>
+            <div className="text-pink-400 text-2xl lg:text-4xl font-bold">ศิษย์เก่า</div>
           </div>
-          <div className="flex justify-center items-center mb-4">
-            <div className="text-blue-300 text-2xl mr-2">คืนสู่เหย้า</div>
-            <div className="text-yellow-400 text-4xl font-bold">ชาวเหลืองฟ้า</div>
-            <div className="bg-red-500 text-white px-4 py-2 rounded-lg ml-4 transform -rotate-12">
-              <div className="text-sm">โต๊ะจีน</div>
-              <div className="text-lg font-bold">โต๊ะละ 2,000 บาท</div>
+          <div className="flex flex-col lg:flex-row justify-center items-center mb-2 lg:mb-4">
+            <div className="flex items-center mb-2 lg:mb-0">
+              <div className="text-blue-300 text-lg lg:text-2xl mr-2">คืนสู่เหย้า</div>
+              <div className="text-yellow-400 text-2xl lg:text-4xl font-bold">ชาวเหลืองฟ้า</div>
+            </div>
+            <div className="bg-red-500 text-white px-3 lg:px-4 py-1 lg:py-2 rounded-lg lg:ml-4 transform -rotate-12">
+              <div className="text-xs lg:text-sm">โต๊ะจีน</div>
+              <div className="text-sm lg:text-lg font-bold">โต๊ะละ 2,000 บาท</div>
             </div>
           </div>
-          <div className="text-yellow-300 text-lg mb-4">
+          <div className="text-yellow-300 text-sm lg:text-lg mb-2 lg:mb-4 px-2">
             และร่วมพิธีมุฑิตาจิตคุณครูรุ่งนภา เชิงกลาง เนื่องในโอกาสเกษียณอายุราชการ
           </div>
 
           {/* Stage */}
-          <div className="mb-8">
-            <div className="w-96 h-16 bg-gradient-to-r from-yellow-600 to-yellow-800 mx-auto rounded-lg shadow-lg">
-              <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border-4 border-yellow-500"></div>
+          <div className="mb-4 lg:mb-8">
+            <div className="w-64 lg:w-96 h-12 lg:h-16 bg-gradient-to-r from-yellow-600 to-yellow-800 mx-auto rounded-lg shadow-lg">
+              <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border-2 lg:border-4 border-yellow-500"></div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex justify-center space-x-4 mb-8">
+          <div className="flex flex-col lg:flex-row justify-center space-y-2 lg:space-y-0 lg:space-x-4 mb-4 lg:mb-8">
             <button
               onClick={exportToExcel}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-bold"
+              className="bg-green-600 text-white px-4 lg:px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm lg:text-base"
             >
               📊 Export Excel
             </button>
             <button
               onClick={loadBookings}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold"
+              className="bg-blue-600 text-white px-4 lg:px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm lg:text-base"
             >
               🔄 รีเฟรช
             </button>
           </div>
         </div>
 
-        {/* Table Layout - ตามภาพเป๊ะๆ */}
+        {/* Table Layout - ตามภาพเป๊ะๆ + Responsive สำหรับมือถือ */}
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center items-start space-x-4 mb-8">
+          <div className="flex flex-col lg:flex-row justify-center items-start lg:space-x-4 space-y-6 lg:space-y-0 mb-8">
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 lg:gap-3">
+              <div className="lg:hidden col-span-3 text-center text-purple-300 font-bold mb-2">
+                โซนด้านใน (โต๊ะ 1-27)
+              </div>
               {Array.from({length: 27}, (_, i) => i + 1).map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 const getTableColor = () => {
@@ -286,7 +291,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                      w-12 h-12 lg:w-16 lg:h-16 rounded-full text-white font-bold text-sm lg:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -301,7 +306,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* ทางเดิน 1 */}
-            <div className="flex items-center justify-center h-96">
+            <div className="hidden lg:flex items-center justify-center h-96">
               <div className="w-6 h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
                 <div className="transform -rotate-90 text-orange-100 font-bold text-sm whitespace-nowrap">
                   ทางเดิน
@@ -310,7 +315,10 @@ export default function TableBookingPage() {
             </div>
 
             {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-3" style={{ paddingTop: '80px' }}>
+            <div className="grid grid-cols-2 gap-2 lg:gap-3" style={{ paddingTop: '0px' }}>
+              <div className="lg:hidden col-span-2 text-center text-orange-300 font-bold mb-2">
+                โซนกลาง (โต๊ะ 28-41)
+              </div>
               {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 const getTableColor = () => {
@@ -327,7 +335,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                      w-12 h-12 lg:w-16 lg:h-16 rounded-full text-white font-bold text-sm lg:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -342,7 +350,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* ทางเดิน 2 */}
-            <div className="flex items-center justify-center h-96">
+            <div className="hidden lg:flex items-center justify-center h-96">
               <div className="w-6 h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
                 <div className="transform -rotate-90 text-orange-100 font-bold text-sm whitespace-nowrap">
                   ทางเดิน
@@ -351,7 +359,10 @@ export default function TableBookingPage() {
             </div>
 
             {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว ตามภาพเป๊ะๆ */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 lg:gap-3">
+              <div className="lg:hidden col-span-3 text-center text-orange-300 font-bold mb-2">
+                โซนด้านนอก (โต๊ะ 42-62)
+              </div>
               {[42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 const getTableColor = () => {
@@ -368,7 +379,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                      w-12 h-12 lg:w-16 lg:h-16 rounded-full text-white font-bold text-sm lg:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -385,14 +396,14 @@ export default function TableBookingPage() {
         </div>
 
         {/* Fireworks */}
-        <div className="absolute bottom-20 right-20">
+        <div className="absolute bottom-10 lg:bottom-20 right-4 lg:right-20">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+              className="absolute w-1 h-1 lg:w-2 lg:h-2 bg-yellow-400 rounded-full animate-ping"
               style={{
-                left: `${i * 20}px`,
-                bottom: `${i * 15}px`,
+                left: `${i * 10}px`,
+                bottom: `${i * 8}px`,
                 animationDelay: `${i * 0.5}s`
               }}
             />
@@ -401,11 +412,11 @@ export default function TableBookingPage() {
 
         {/* Decorative Flags */}
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="flex justify-center space-x-2">
+          <div className="flex justify-center space-x-1 lg:space-x-2">
             {[...Array(15)].map((_, i) => (
               <div
                 key={i}
-                className="w-6 h-8 clip-path-triangle"
+                className="w-3 h-4 lg:w-6 lg:h-8 clip-path-triangle"
                 style={{
                   backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffd93d'][i % 5]
                 }}
@@ -415,31 +426,31 @@ export default function TableBookingPage() {
         </div>
 
         {/* Backdrop Label */}
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
-          <div className="bg-red-600 text-white px-6 py-3 rounded-lg text-xl font-bold transform -rotate-3 shadow-lg">
+        <div className="absolute bottom-4 lg:bottom-10 left-1/2 transform -translate-x-1/2">
+          <div className="bg-red-600 text-white px-3 lg:px-6 py-1 lg:py-3 rounded-lg text-sm lg:text-xl font-bold transform -rotate-3 shadow-lg">
             Backdrop
           </div>
         </div>
 
         {/* Status Info */}
-        <div className="fixed top-4 right-4 bg-black bg-opacity-50 text-white p-4 rounded-lg">
+        <div className="fixed top-4 right-4 bg-black bg-opacity-50 text-white p-2 lg:p-4 rounded-lg text-xs lg:text-base max-w-xs lg:max-w-none">
           <div>จำนวนโต๊ะที่จองแล้ว: {bookings.length} โต๊ะ</div>
           <div>จำนวนโต๊ะที่จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length} โต๊ะ</div>
-          <div className="text-sm mt-2 text-gray-300">
+          <div className="text-xs lg:text-sm mt-2 text-gray-300">
             อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
           </div>
           <div className="mt-2 space-y-1">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-purple-400 rounded-full"></div>
-              <span className="text-sm">โต๊ะว่าง</span>
+              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-purple-400 rounded-full"></div>
+              <span className="text-xs lg:text-sm">โต๊ะว่าง</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-              <span className="text-sm">จองแล้ว</span>
+              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-orange-500 rounded-full"></div>
+              <span className="text-xs lg:text-sm">จองแล้ว</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-              <span className="text-sm">จ่ายแล้ว</span>
+              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full"></div>
+              <span className="text-xs lg:text-sm">จ่ายแล้ว</span>
             </div>
           </div>
         </div>
@@ -507,9 +518,9 @@ function BookingModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-4 lg:p-6 w-full max-w-md mx-4">
+        <h3 className="text-lg lg:text-xl font-bold mb-4 text-gray-800">
           {existingBooking ? 'แก้ไข' : 'จอง'}โต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
         </h3>
         
@@ -589,7 +600,7 @@ function BookingModal({
             />
           </div>
           
-          <div className="flex space-x-4 pt-4">
+          <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-2 lg:space-y-0 pt-4">
             <button
               type="button"
               onClick={onClose}
