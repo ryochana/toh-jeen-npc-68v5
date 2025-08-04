@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'ระบบจองโต๊ะงานแต่งงาน',
+  title: 'โต๊ะจีนบ้านโนนผักชี',
   description: 'ระบบจองโต๊ะสำหรับงานแต่งงาน',
 }
 
