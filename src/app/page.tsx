@@ -44,13 +44,18 @@ export default function TableBookingPage() {
 
   const loadBookings = async () => {
     try {
+      console.log('Loading bookings from Supabase...')
       const { data, error } = await supabase
         .from('table_bookings')
         .select('*')
         .order('table_number')
       
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
       
+      console.log(`Loaded ${data?.length || 0} bookings:`, data)
       setBookings(data || [])
       
       const updatedTables = initializeTables().map(table => {
@@ -63,8 +68,10 @@ export default function TableBookingPage() {
       })
       
       setTables(updatedTables)
+      console.log('Tables updated successfully')
     } catch (error) {
       console.error('Error loading bookings:', error)
+      alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -72,9 +79,11 @@ export default function TableBookingPage() {
 
   const handleBooking = async (bookingData: Omit<TableBooking, 'id' | 'created_at'>) => {
     try {
+      console.log('Submitting booking:', bookingData)
       const existingBooking = tables.find(t => t.table_number === bookingData.table_number)?.booking
       
       if (existingBooking) {
+        console.log('Updating existing booking')
         const { error } = await supabase
           .from('table_bookings')
           .update(bookingData)
@@ -83,6 +92,7 @@ export default function TableBookingPage() {
         if (error) throw error
         alert('แก้ไขข้อมูลการจองสำเร็จ!')
       } else {
+        console.log('Creating new booking')
         const { error } = await supabase
           .from('table_bookings')
           .insert([bookingData])
@@ -91,12 +101,13 @@ export default function TableBookingPage() {
         alert('จองโต๊ะสำเร็จ!')
       }
       
+      console.log('Reloading bookings after update...')
       await loadBookings()
       setShowBookingForm(false)
       setSelectedTable(null)
     } catch (error) {
       console.error('Error booking table:', error)
-      alert('เกิดข้อผิดพลาดในการจองโต๊ะ')
+      alert('เกิดข้อผิดพลาดในการจองโต๊ะ: ' + error.message)
     }
   }
 
@@ -121,7 +132,18 @@ export default function TableBookingPage() {
 
   const exportToExcel = async () => {
     try {
-      const response = await fetch('/api/export')
+      // รีเฟรชข้อมูลก่อน export เพื่อให้แน่ใจว่าได้ข้อมูลล่าสุด
+      await loadBookings()
+      
+      // เพิ่ม timestamp เพื่อ bypass cache
+      const timestamp = Date.now()
+      const response = await fetch(`/api/export?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      
       if (!response.ok) throw new Error('Export failed')
       
       const blob = await response.blob()
@@ -129,11 +151,18 @@ export default function TableBookingPage() {
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `รายการจองโต๊ะ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`
+      
+      // ใช้ timestamp ในชื่อไฟล์เพื่อให้แตกต่างกันทุกครั้ง
+      const now = new Date()
+      const timeString = `${now.toLocaleDateString('th-TH').replace(/\//g, '-')}_${now.toLocaleTimeString('th-TH').replace(/:/g, '-')}`
+      a.download = `รายการจองโต๊ะ_${timeString}.xlsx`
+      
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+      
+      alert(`Export สำเร็จ! ข้อมูล ${bookings.length} รายการ`)
     } catch (error) {
       console.error('Error exporting:', error)
       alert('เกิดข้อผิดพลาดในการ export ข้อมูล')
@@ -142,6 +171,14 @@ export default function TableBookingPage() {
 
   useEffect(() => {
     loadBookings()
+    
+    // Auto-refresh ทุกๆ 30 วินาที
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing data...')
+      loadBookings()
+    }, 30000) // 30 seconds
+    
+    return () => clearInterval(interval)
   }, [])
 
   if (loading) {
@@ -173,6 +210,9 @@ export default function TableBookingPage() {
         <div className="bg-black bg-opacity-50 text-white p-4 rounded-lg inline-block">
           <div>จำนวนโต๊ะที่จองแล้ว: {bookings.length} โต๊ะ</div>
           <div>จำนวนโต๊ะที่จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length} โต๊ะ</div>
+          <div className="text-sm mt-2 text-gray-300">
+            อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
+          </div>
         </div>
       </div>
 

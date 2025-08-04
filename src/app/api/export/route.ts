@@ -4,13 +4,18 @@ import * as XLSX from 'xlsx'
 
 export async function GET() {
   try {
-    // ดึงข้อมูลการจองทั้งหมดจาก Supabase พร้อมข้อมูลล่าสุด
+    // ดึงข้อมูลการจองทั้งหมดจาก Supabase พร้อมข้อมูลล่าสุด (bypass cache)
     const { data: bookings, error } = await supabase
       .from('table_bookings')
       .select('*')
       .order('table_number')
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+
+    console.log(`Export: Found ${bookings?.length || 0} bookings`)
 
     // สร้าง Excel data
     const headers = ['หมายเลขโต๊ะ', 'ชื่อผู้จอง', 'เบอร์โทรศัพท์', 'จำนวนคน', 'วันที่จอง', 'โซน', 'สถานะการชำระ', 'หมายเหตุ']
@@ -37,14 +42,19 @@ export async function GET() {
     // แปลงเป็น buffer
     const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
 
-    // สร้างชื่อไฟล์พร้อมวันที่
-    const fileName = `รายการจองโต๊ะงานแต่งงาน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`
+    // สร้างชื่อไฟล์พร้อมวันที่และเวลา
+    const now = new Date()
+    const timestamp = `${now.toLocaleDateString('th-TH').replace(/\//g, '-')}_${now.toLocaleTimeString('th-TH').replace(/:/g, '-')}`
+    const fileName = `รายการจองโต๊ะงานแต่งงาน_${timestamp}.xlsx`
 
-    // ส่งไฟล์กลับ
+    // ส่งไฟล์กลับ พร้อม headers ป้องกัน cache
     return new NextResponse(excelBuffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
     })
 
