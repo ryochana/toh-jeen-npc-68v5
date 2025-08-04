@@ -191,19 +191,19 @@ export default function TableBookingPage() {
         {/* Header */}
         <div className="text-center mb-8 mt-16">
           <div className="flex justify-center items-center mb-4">
-            <div className="text-pink-300 text-2xl mr-2">รู้อะไม❤️</div>
-            <div className="text-pink-400 text-4xl font-bold">สีชมียเก่า</div>
+            <div className="text-pink-300 text-2xl mr-2">รวม❤️</div>
+            <div className="text-pink-400 text-4xl font-bold">ศิษย์เก่า</div>
           </div>
           <div className="flex justify-center items-center mb-4">
-            <div className="text-blue-300 text-2xl mr-2">คู่มรคิน</div>
-            <div className="text-yellow-400 text-4xl font-bold">บ่าวดูอยิน</div>
+            <div className="text-blue-300 text-2xl mr-2">คืนสู่เหย้า</div>
+            <div className="text-yellow-400 text-4xl font-bold">ชาวเหลืองฟ้า</div>
             <div className="bg-red-500 text-white px-4 py-2 rounded-lg ml-4 transform -rotate-12">
               <div className="text-sm">โต๊ะจีน</div>
               <div className="text-lg font-bold">โต๊ะละ 2,000 บาท</div>
             </div>
           </div>
           <div className="text-yellow-300 text-lg mb-4">
-            และร่วมฮ่วมพิธีคำรวมคุคครอบครัว เงินกะรายง เนื่องเย็ดปูการพาเก้จาภูงราชดี
+            และร่วมพิธีมุฑิตาจิตคุณครูรุ่งนภา เชิงกลาง เนื่องในโอกาสเกษียณอายุราชการ
           </div>
 
           {/* Stage */}
@@ -231,12 +231,11 @@ export default function TableBookingPage() {
         </div>
 
         {/* Table Layout */}
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-9 gap-4 mb-8">
-            {/* ฝั่งซ้าย (โต๊ะ 1-27) */}
-            <div className="col-span-3 grid grid-cols-3 gap-2">
-              {[...Array(27)].map((_, index) => {
-                const tableNum = index + 1
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-start space-x-4 mb-8">
+            {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({length: 27}, (_, i) => i + 1).map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
                   <button
@@ -266,18 +265,18 @@ export default function TableBookingPage() {
               })}
             </div>
 
-            {/* ทางเดิน */}
-            <div className="col-span-1 flex items-center justify-center">
-              <div className="w-4 h-96 bg-orange-500 rounded-full relative">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-90 text-orange-100 font-bold text-sm whitespace-nowrap">
+            {/* ทางเดิน 1 */}
+            <div className="flex items-center justify-center h-96">
+              <div className="w-6 h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
+                <div className="transform -rotate-90 text-orange-100 font-bold text-sm whitespace-nowrap">
                   ทางเดิน
                 </div>
               </div>
             </div>
 
-            {/* กลาง (โต๊ะ 28-41) */}
-            <div className="col-span-2 grid grid-cols-2 gap-2">
-              {[28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41].map((tableNum) => {
+            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว */}
+            <div className="grid grid-cols-2 gap-3">
+              {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
                   <button
@@ -307,15 +306,75 @@ export default function TableBookingPage() {
               })}
             </div>
 
-            {/* ทางเดิน */}
-            <div className="col-span-1 flex items-center justify-center">
-              <div className="w-4 h-96 bg-orange-500 rounded-full"></div>
+            {/* ทางเดิน 2 */}
+            <div className="flex items-center justify-center h-96">
+              <div className="w-6 h-96 bg-orange-500 rounded-full"></div>
             </div>
 
-            {/* ฝั่งขวา (โต๊ะ 42-62) */}
-            <div className="col-span-3 grid grid-cols-3 gap-2">
-              {[...Array(21)].map((_, index) => {
-                const tableNum = index + 42
+            {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* แถวบนสุด: 42, 43, 44 */}
+              {[42,43,44].map((tableNum) => {
+                const table = tables.find(t => t.table_number === tableNum)
+                return (
+                  <button
+                    key={tableNum}
+                    onClick={() => {
+                      if (table?.is_booked) {
+                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
+                          handleCancelBooking(tableNum)
+                        }
+                      } else {
+                        setSelectedTable(tableNum)
+                        setShowBookingForm(true)
+                      }
+                    }}
+                    className={`
+                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                      ${table?.is_booked 
+                        ? 'bg-red-500 hover:bg-red-600' 
+                        : 'bg-purple-400 hover:bg-purple-500'
+                      }
+                    `}
+                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
+                  >
+                    {tableNum}
+                  </button>
+                )
+              })}
+              
+              {/* แถวที่ 2: 42, 43, 44 (ซ้ำ) */}
+              {[42,43,44].map((tableNum) => {
+                const table = tables.find(t => t.table_number === tableNum)
+                return (
+                  <button
+                    key={`row2-${tableNum}`}
+                    onClick={() => {
+                      if (table?.is_booked) {
+                        if (confirm('โต๊ะนี้จองแล้ว ต้องการยกเลิกการจองหรือไม่?')) {
+                          handleCancelBooking(tableNum)
+                        }
+                      } else {
+                        setSelectedTable(tableNum)
+                        setShowBookingForm(true)
+                      }
+                    }}
+                    className={`
+                      w-16 h-16 rounded-full text-white font-bold text-lg transition-all hover:scale-105
+                      ${table?.is_booked 
+                        ? 'bg-red-500 hover:bg-red-600' 
+                        : 'bg-purple-400 hover:bg-purple-500'
+                      }
+                    `}
+                    title={table?.is_booked ? `จองแล้ว: ${table.booking?.guest_name}` : 'คลิกเพื่อจอง'}
+                  >
+                    {tableNum}
+                  </button>
+                )
+              })}
+
+              {/* แถวที่ 3-7: 45-62 */}
+              {[45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
                 const table = tables.find(t => t.table_number === tableNum)
                 return (
                   <button
