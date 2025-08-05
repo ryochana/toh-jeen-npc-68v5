@@ -287,9 +287,9 @@ export default function TableBookingPage() {
 
         {/* Table Layout - ตามภาพเป๊ะๆ */}
         <div className="max-w-7xl mx-auto px-2 sm:px-2">
-          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4" style={{ minWidth: '380px' }}>
+          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4" style={{ minWidth: '500px' }}>
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
-            <div className="grid grid-cols-3 gap-0.5 sm:gap-3 flex-shrink-0">
+            <div className="grid grid-cols-3 gap-0 sm:gap-1 flex-shrink-0">
               <div className="col-span-3 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 1-27)
               </div>
@@ -300,6 +300,12 @@ export default function TableBookingPage() {
                   if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
                   return 'bg-orange-500 hover:bg-orange-600'
                 }
+
+                const getStatusText = () => {
+                  if (!table?.is_booked) return 'ว่าง'
+                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
+                  return 'จองแล้ว'
+                }
                 
                 return (
                   <button
@@ -309,7 +315,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -317,7 +323,11 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    {tableNum}
+                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs text-center leading-tight overflow-hidden">
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                    </div>
+                    <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
                 )
               })}
@@ -333,7 +343,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-0.5 sm:gap-3 flex-shrink-0 pt-1 sm:pt-20">
+            <div className="grid grid-cols-2 gap-0 sm:gap-1 flex-shrink-0 pt-1 sm:pt-20">
               <div className="col-span-2 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 28-41)
               </div>
@@ -344,6 +354,12 @@ export default function TableBookingPage() {
                   if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
                   return 'bg-orange-500 hover:bg-orange-600'
                 }
+
+                const getStatusText = () => {
+                  if (!table?.is_booked) return 'ว่าง'
+                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
+                  return 'จองแล้ว'
+                }
                 
                 return (
                   <button
@@ -353,7 +369,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -361,7 +377,11 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    {tableNum}
+                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs text-center leading-tight overflow-hidden">
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                    </div>
+                    <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
                 )
               })}
@@ -377,7 +397,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว ตามภาพเป๊ะๆ */}
-            <div className="grid grid-cols-3 gap-0.5 sm:gap-3 flex-shrink-0">
+            <div className="grid grid-cols-3 gap-0 sm:gap-1 flex-shrink-0">
               <div className="col-span-3 text-center text-orange-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านนอก (โต๊ะ 42-62)
               </div>
@@ -388,6 +408,12 @@ export default function TableBookingPage() {
                   if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
                   return 'bg-orange-500 hover:bg-orange-600'
                 }
+
+                const getStatusText = () => {
+                  if (!table?.is_booked) return 'ว่าง'
+                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
+                  return 'จองแล้ว'
+                }
                 
                 return (
                   <button
@@ -397,7 +423,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -405,7 +431,11 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    {tableNum}
+                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs text-center leading-tight overflow-hidden">
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                    </div>
+                    <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
                 )
               })}
@@ -602,21 +632,21 @@ export default function TableBookingPage() {
           <div className="mt-1 sm:mt-2 space-y-1">
             <div className="flex items-center justify-between space-x-1 sm:space-x-2">
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 rounded-full"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">โต๊ะว่าง</span>
               </div>
               <span className="text-xs sm:text-sm font-bold">{65 - bookings.length}</span>
             </div>
             <div className="flex items-center justify-between space-x-1 sm:space-x-2">
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">จองแล้ว</span>
               </div>
               <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'booked').length}</span>
             </div>
             <div className="flex items-center justify-between space-x-1 sm:space-x-2">
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">จ่ายแล้ว</span>
               </div>
               <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'paid').length}</span>
