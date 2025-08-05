@@ -462,59 +462,131 @@ export default function TableBookingPage() {
                 ยังไม่มีการจองโต๊ะ
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {bookings
-                  .sort((a, b) => a.table_number - b.table_number)
-                  .map((booking) => (
-                    <div
-                      key={booking.table_number}
-                      className={`
-                        p-4 rounded-lg border-2 transition-all hover:scale-105
-                        ${booking.payment_status === 'paid' 
-                          ? 'bg-green-50 border-green-500 text-green-800' 
-                          : 'bg-orange-50 border-orange-500 text-orange-800'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-lg font-bold">
-                          โต๊ะ {booking.table_number}
-                        </div>
-                        <div className={`
-                          px-2 py-1 rounded-full text-xs font-bold
-                          ${booking.payment_status === 'paid' 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-orange-500 text-white'
-                          }
-                        `}>
-                          {booking.payment_status === 'paid' ? '✅ จ่ายแล้ว' : '📝 จองแล้ว'}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1 text-sm">
-                        <div>
-                          <span className="font-medium">ชื่อ:</span> {booking.guest_name}
-                        </div>
-                        <div>
-                          <span className="font-medium">เบอร์:</span> {booking.phone_number}
-                        </div>
-                        <div className="flex justify-between">
-                          <div>
-                            <span className="font-medium">จำนวน:</span> {booking.party_size} คน
-                          </div>
-                          <div>
-                            <span className="font-medium">โซน:</span> {booking.zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'}
-                          </div>
-                        </div>
-                        {booking.notes && (
-                          <div className="mt-2 p-2 bg-white bg-opacity-50 rounded text-xs">
-                            <span className="font-medium">หมายเหตุ:</span> {booking.notes}
-                          </div>
-                        )}
-                      </div>
+              <div className="bg-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden">
+                <div className="max-h-96 overflow-y-auto">
+                  <table className="w-full table-auto">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          โต๊ะ
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          ชื่อผู้จอง
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                          เบอร์โทร
+                        </th>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          จำนวน
+                        </th>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                          โซน
+                        </th>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          สถานะ
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                          หมายเหตุ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {bookings
+                        .sort((a, b) => a.table_number - b.table_number)
+                        .map((booking, index) => (
+                          <tr 
+                            key={booking.table_number}
+                            className={`
+                              hover:bg-gray-50 transition-colors cursor-pointer
+                              ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                            `}
+                            onClick={() => {
+                              setSelectedTable(booking.table_number)
+                              setShowBookingForm(true)
+                            }}
+                          >
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className={`
+                                  w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm
+                                  ${booking.payment_status === 'paid' ? 'bg-green-500' : 'bg-orange-500'}
+                                `}>
+                                  {booking.table_number}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {booking.guest_name}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap hidden sm:table-cell">
+                              <div className="text-sm text-gray-500">
+                                {booking.phone_number}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <div className="text-sm text-gray-900">
+                                {booking.party_size} คน
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-center hidden md:table-cell">
+                              <span className={`
+                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                ${booking.zone === 'inside' 
+                                  ? 'bg-purple-100 text-purple-800' 
+                                  : 'bg-blue-100 text-blue-800'
+                                }
+                              `}>
+                                {booking.zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <span className={`
+                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                ${booking.payment_status === 'paid' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-orange-100 text-orange-800'
+                                }
+                              `}>
+                                {booking.payment_status === 'paid' ? '✅ จ่ายแล้ว' : '📝 จองแล้ว'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 hidden lg:table-cell">
+                              <div className="text-sm text-gray-500 max-w-xs truncate" title={booking.notes || ''}>
+                                {booking.notes || '-'}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Mobile view additional info */}
+                <div className="sm:hidden p-4 bg-gray-50 border-t">
+                  <div className="text-xs text-gray-600">
+                    💡 แตะแถวเพื่อดูรายละเอียดเพิ่มเติม
+                  </div>
+                </div>
+                
+                {/* Table summary */}
+                <div className="px-4 py-3 bg-gray-50 border-t">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-gray-600">
+                      รวม {bookings.length} โต๊ะ จาก 65 โต๊ะ
                     </div>
-                  ))
-                }
+                    <div className="flex space-x-4">
+                      <span className="text-orange-600 font-medium">
+                        จองแล้ว: {bookings.filter(b => b.payment_status === 'booked').length}
+                      </span>
+                      <span className="text-green-600 font-medium">
+                        จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
