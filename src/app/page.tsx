@@ -287,7 +287,7 @@ export default function TableBookingPage() {
 
         {/* Table Layout - ตามภาพเป๊ะๆ */}
         <div className="max-w-7xl mx-auto px-2 sm:px-2">
-          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4" style={{ minWidth: '500px' }}>
+          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4 pr-4" style={{ minWidth: '600px' }}>
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
             <div className="grid grid-cols-3 gap-0 sm:gap-1 flex-shrink-0">
               <div className="col-span-3 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
@@ -315,7 +315,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -325,7 +325,7 @@ export default function TableBookingPage() {
                   >
                     <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
@@ -369,7 +369,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -379,7 +379,7 @@ export default function TableBookingPage() {
                   >
                     <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
@@ -423,7 +423,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -433,7 +433,7 @@ export default function TableBookingPage() {
                   >
                     <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
