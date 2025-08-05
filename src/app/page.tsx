@@ -287,9 +287,9 @@ export default function TableBookingPage() {
 
         {/* Table Layout - ตามภาพเป๊ะๆ */}
         <div className="max-w-7xl mx-auto px-2 sm:px-2">
-          <div className="flex justify-start items-start space-x-1 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4" style={{ minWidth: '420px' }}>
+          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4" style={{ minWidth: '380px' }}>
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
-            <div className="grid grid-cols-3 gap-1 sm:gap-3 flex-shrink-0">
+            <div className="grid grid-cols-3 gap-0.5 sm:gap-3 flex-shrink-0">
               <div className="col-span-3 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 1-27)
               </div>
@@ -309,7 +309,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-8 h-8 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -325,7 +325,7 @@ export default function TableBookingPage() {
 
             {/* ทางเดิน 1 */}
             <div className="flex items-center justify-center h-48 sm:h-96 flex-shrink-0">
-              <div className="w-2 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
+              <div className="w-1 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
                 <div className="transform -rotate-90 text-orange-100 font-bold text-xs sm:text-sm whitespace-nowrap">
                   ทางเดิน
                 </div>
@@ -333,7 +333,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-1 sm:gap-3 flex-shrink-0 pt-3 sm:pt-20">
+            <div className="grid grid-cols-2 gap-0.5 sm:gap-3 flex-shrink-0 pt-1 sm:pt-20">
               <div className="col-span-2 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 28-41)
               </div>
@@ -353,7 +353,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-8 h-8 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -369,7 +369,7 @@ export default function TableBookingPage() {
 
             {/* ทางเดิน 2 */}
             <div className="flex items-center justify-center h-48 sm:h-96 flex-shrink-0">
-              <div className="w-2 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
+              <div className="w-1 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
                 <div className="transform -rotate-90 text-orange-100 font-bold text-xs sm:text-sm whitespace-nowrap">
                   ทางเดิน
                 </div>
@@ -377,7 +377,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว ตามภาพเป๊ะๆ */}
-            <div className="grid grid-cols-3 gap-1 sm:gap-3 flex-shrink-0">
+            <div className="grid grid-cols-3 gap-0.5 sm:gap-3 flex-shrink-0">
               <div className="col-span-3 text-center text-orange-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านนอก (โต๊ะ 42-62)
               </div>
@@ -397,7 +397,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-8 h-8 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
+                      w-7 h-7 sm:w-16 sm:h-16 rounded-full text-white font-bold text-xs sm:text-lg transition-all hover:scale-105
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
