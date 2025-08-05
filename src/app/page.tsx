@@ -193,14 +193,28 @@ export default function TableBookingPage() {
     }}>
       {/* Background Stars */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(50)].map((_, i) => (
+        {[...Array(100)].map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-yellow-300 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${1 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+        {/* Extra sparkling stars */}
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={`sparkle-${i}`}
+            className="absolute w-0.5 h-0.5 bg-white rounded-full animate-ping"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
             }}
           />
         ))}
@@ -247,8 +261,10 @@ export default function TableBookingPage() {
 
           {/* Stage */}
           <div className="mb-4 sm:mb-8">
-            <div className="w-48 sm:w-96 h-8 sm:h-16 bg-gradient-to-r from-yellow-600 to-yellow-800 mx-auto rounded-lg shadow-lg">
-              <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border-2 sm:border-4 border-yellow-500"></div>
+            <div className="w-48 sm:w-96 h-8 sm:h-16 bg-gradient-to-r from-yellow-600 to-yellow-800 mx-auto rounded-lg shadow-lg relative">
+              <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border-2 sm:border-4 border-yellow-500 flex items-center justify-center">
+                <div className="text-yellow-900 font-bold text-xs sm:text-lg">🎭 เวที 🎭</div>
+              </div>
             </div>
           </div>
 
@@ -270,8 +286,8 @@ export default function TableBookingPage() {
         </div>
 
         {/* Table Layout - ตามภาพเป๊ะๆ */}
-        <div className="max-w-7xl mx-auto px-2">
-          <div className="flex justify-center items-start space-x-1 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-1 sm:px-2">
+          <div className="flex justify-center items-start space-x-2 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4 min-w-max">
             {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
             <div className="grid grid-cols-3 gap-1 sm:gap-3 flex-shrink-0">
               <div className="col-span-3 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
@@ -317,7 +333,7 @@ export default function TableBookingPage() {
             </div>
 
             {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-1 sm:gap-3 flex-shrink-0 pt-10 sm:pt-20">
+            <div className="grid grid-cols-2 gap-1 sm:gap-3 flex-shrink-0 pt-6 sm:pt-20">
               <div className="col-span-2 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 28-41)
               </div>
@@ -434,6 +450,76 @@ export default function TableBookingPage() {
           </div>
         </div>
 
+        {/* Booking List */}
+        <div className="mt-8 sm:mt-16 mb-20">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-center text-yellow-300 text-xl sm:text-2xl font-bold mb-6">
+              📋 รายชื่อผู้จอง ({bookings.length} โต๊ะ)
+            </h2>
+            
+            {bookings.length === 0 ? (
+              <div className="text-center text-gray-300 py-8">
+                ยังไม่มีการจองโต๊ะ
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {bookings
+                  .sort((a, b) => a.table_number - b.table_number)
+                  .map((booking) => (
+                    <div
+                      key={booking.table_number}
+                      className={`
+                        p-4 rounded-lg border-2 transition-all hover:scale-105
+                        ${booking.payment_status === 'paid' 
+                          ? 'bg-green-50 border-green-500 text-green-800' 
+                          : 'bg-orange-50 border-orange-500 text-orange-800'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-lg font-bold">
+                          โต๊ะ {booking.table_number}
+                        </div>
+                        <div className={`
+                          px-2 py-1 rounded-full text-xs font-bold
+                          ${booking.payment_status === 'paid' 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-orange-500 text-white'
+                          }
+                        `}>
+                          {booking.payment_status === 'paid' ? '✅ จ่ายแล้ว' : '📝 จองแล้ว'}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1 text-sm">
+                        <div>
+                          <span className="font-medium">ชื่อ:</span> {booking.guest_name}
+                        </div>
+                        <div>
+                          <span className="font-medium">เบอร์:</span> {booking.phone_number}
+                        </div>
+                        <div className="flex justify-between">
+                          <div>
+                            <span className="font-medium">จำนวน:</span> {booking.party_size} คน
+                          </div>
+                          <div>
+                            <span className="font-medium">โซน:</span> {booking.zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'}
+                          </div>
+                        </div>
+                        {booking.notes && (
+                          <div className="mt-2 p-2 bg-white bg-opacity-50 rounded text-xs">
+                            <span className="font-medium">หมายเหตุ:</span> {booking.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Status Info */}
         <div className="fixed top-4 right-2 sm:right-4 bg-black bg-opacity-50 text-white p-2 sm:p-4 rounded-lg text-xs sm:text-sm max-w-48 sm:max-w-none">
           <div>จองแล้ว: {bookings.length} โต๊ะ</div>
@@ -442,17 +528,26 @@ export default function TableBookingPage() {
             อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
           </div>
           <div className="mt-1 sm:mt-2 space-y-1">
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 rounded-full"></div>
-              <span className="text-xs sm:text-sm">โต๊ะว่าง</span>
+            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 rounded-full"></div>
+                <span className="text-xs sm:text-sm">โต๊ะว่าง</span>
+              </div>
+              <span className="text-xs sm:text-sm font-bold">{65 - bookings.length}</span>
             </div>
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full"></div>
-              <span className="text-xs sm:text-sm">จองแล้ว</span>
+            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full"></div>
+                <span className="text-xs sm:text-sm">จองแล้ว</span>
+              </div>
+              <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'booked').length}</span>
             </div>
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full"></div>
-              <span className="text-xs sm:text-sm">จ่ายแล้ว</span>
+            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full"></div>
+                <span className="text-xs sm:text-sm">จ่ายแล้ว</span>
+              </div>
+              <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'paid').length}</span>
             </div>
           </div>
         </div>
