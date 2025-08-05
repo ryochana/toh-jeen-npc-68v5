@@ -342,8 +342,8 @@ export default function TableBookingPage() {
               </div>
             </div>
 
-            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 */}
-            <div className="grid grid-cols-2 gap-0 sm:gap-1 flex-shrink-0 pt-1 sm:pt-20">
+            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 - ให้อยู่ระดับเดียวกับโต๊ะ 6 */}
+            <div className="grid grid-cols-2 gap-0 sm:gap-1 flex-shrink-0 pt-16 sm:pt-40">
               <div className="col-span-2 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
                 โซนด้านใน (โต๊ะ 28-41)
               </div>
