@@ -315,7 +315,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -323,9 +323,9 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
@@ -369,7 +369,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -377,9 +377,9 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
@@ -423,7 +423,7 @@ export default function TableBookingPage() {
                       setShowBookingForm(true)
                     }}
                     className={`
-                      w-24 h-16 sm:w-32 sm:h-24 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
+                      w-16 h-12 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
                       ${getTableColor()}
                     `}
                     title={table?.is_booked ? 
@@ -431,9 +431,9 @@ export default function TableBookingPage() {
                       'คลิกเพื่อจอง'
                     }
                   >
-                    <div className="text-xs sm:text-sm font-bold">โต๊ะ {tableNum}</div>
+                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
                     <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 8) || 'ไม่ระบุ' : 'ว่าง'}
+                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 6) || 'ไม่ระบุ' : 'ว่าง'}
                     </div>
                     <div className="text-xs opacity-80">{getStatusText()}</div>
                   </button>
