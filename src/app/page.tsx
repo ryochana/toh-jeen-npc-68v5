@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase, type TableBooking } from '@/lib/supabase'
+import { type TableBooking } from '@/lib/supabase'
+import { fetchSheetData, convertToTableBookings, type SheetBooking } from '@/lib/googleSheets'
 import AdminLogin from '@/components/AdminLogin'
 import DraggableTable from '@/components/DraggableTable'
 
@@ -22,7 +23,8 @@ export default function TableBookingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isDragMode, setIsDragMode] = useState(false)
-  const [sortBy, setSortBy] = useState<'table_number' | 'booking_date' | 'payment_date'>('table_number')
+  const [sheetData, setSheetData] = useState<SheetBooking[]>([])
+  const [sortBy, setSortBy] = useState<'table_number' | 'booking_date' | 'payment_date' | 'payment_status'>('payment_status')
 
   const initializeTables = (): TableInfo[] => {
     const tableData: TableInfo[] = []
@@ -72,22 +74,19 @@ export default function TableBookingPage() {
 
   const loadBookings = async () => {
     try {
-      console.log('Loading bookings from Supabase...')
-      const { data, error } = await supabase
-        .from('table_bookings')
-        .select('*')
-        .order('table_number')
+      console.log('Loading bookings from Google Sheets...')
+      const sheetData = await fetchSheetData()
       
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
+      console.log(`Loaded ${sheetData.length} sheet entries:`, sheetData)
+      setSheetData(sheetData) // เก็บข้อมูล Sheet ต้นฉบับไว้แสดงผล
       
-      console.log(`Loaded ${data?.length || 0} bookings:`, data)
-      setBookings(data || [])
+      // แปลงข้อมูลจาก Sheet เป็น format ที่ใช้ในแอป
+      // เนื่องจาก 1 entry อาจมีหลายโต๊ะ จึงต้อง flatten
+      const convertedBookings = sheetData.flatMap(convertToTableBookings)
+      setBookings(convertedBookings)
       
       const updatedTables = initializeTables().map(table => {
-        const booking = data?.find(b => b.table_number === table.table_number)
+        const booking = convertedBookings.find(b => b.table_number === table.table_number)
         return {
           ...table,
           is_booked: !!booking,
@@ -98,8 +97,8 @@ export default function TableBookingPage() {
       setTables(updatedTables)
       console.log('Tables updated successfully')
     } catch (error) {
-      console.error('Error loading bookings:', error)
-      alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (error as Error).message)
+      console.error('Error loading bookings from Google Sheets:', error)
+      alert('เกิดข้อผิดพลาดในการโหลดข้อมูลจาก Google Sheets: ' + (error as Error).message)
     } finally {
       setLoading(false)
     }
@@ -172,48 +171,32 @@ export default function TableBookingPage() {
       return
     }
     
-    try {
-      console.log('Submitting booking:', bookingData)
-      const existingBooking = tables.find(t => t.table_number === bookingData.table_number)?.booking
+    // แสดงข้อความแจ้งเตือนให้ผู้ใช้ไปแก้ไขใน Google Sheets
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit`
+    
+    const confirmMessage = `
+กรุณาไปแก้ไขข้อมูลใน Google Sheets โดยตรง:
+
+โต๊ะ: ${bookingData.table_number}
+ชื่อ: ${bookingData.guest_name}
+เบอร์: ${bookingData.phone_number}
+จำนวนคน: ${bookingData.party_size}
+สถานะ: ${bookingData.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}
+
+คลิก OK เพื่อเปิด Google Sheets ในแท็บใหม่
+    `.trim()
+    
+    if (confirm(confirmMessage)) {
+      window.open(sheetUrl, '_blank')
       
-      // เพิ่ม payment_date ถ้าสถานะเป็น paid
-      const finalBookingData = {
-        ...bookingData,
-        payment_date: bookingData.payment_status === 'paid' 
-          ? (existingBooking?.payment_status === 'paid' && existingBooking?.payment_date 
-              ? existingBooking.payment_date  // ใช้วันที่เดิมถ้าจ่ายไปแล้ว
-              : new Date().toISOString()       // บันทึกเวลาใหม่ถ้าเพิ่งจ่าย
-            )
-          : null  // ลบ payment_date ถ้าเปลี่ยนเป็น booked
-      }
-      
-      if (existingBooking) {
-        console.log('Updating existing booking')
-        const { error } = await supabase
-          .from('table_bookings')
-          .update(finalBookingData)
-          .eq('table_number', bookingData.table_number)
-        
-        if (error) throw error
-        alert('แก้ไขข้อมูลการจองสำเร็จ!')
-      } else {
-        console.log('Creating new booking')
-        const { error } = await supabase
-          .from('table_bookings')
-          .insert([finalBookingData])
-        
-        if (error) throw error
-        alert('จองโต๊ะสำเร็จ!')
-      }
-      
-      console.log('Reloading bookings after update...')
-      await loadBookings()
-      setShowBookingForm(false)
-      setSelectedTable(null)
-    } catch (error) {
-      console.error('Error booking table:', error)
-      alert('เกิดข้อผิดพลาดในการจองโต๊ะ: ' + (error as Error).message)
+      // รีเฟรชข้อมูลหลังจาก 3 วินาที
+      setTimeout(() => {
+        loadBookings()
+      }, 3000)
     }
+    
+    setShowBookingForm(false)
+    setSelectedTable(null)
   }
 
   const handleCancelBooking = async (tableNumber: number) => {
@@ -222,52 +205,58 @@ export default function TableBookingPage() {
       return
     }
     
-    if (!confirm('คุณต้องการยกเลิกการจองโต๊ะนี้หรือไม่?')) return
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit`
     
-    try {
-      const { error } = await supabase
-        .from('table_bookings')
-        .delete()
-        .eq('table_number', tableNumber)
+    const confirmMessage = `
+กรุณาไปลบข้อมูลโต๊ะ ${tableNumber} ใน Google Sheets โดยตรง
+
+คลิก OK เพื่อเปิด Google Sheets ในแท็บใหม่
+    `.trim()
+    
+    if (confirm(confirmMessage)) {
+      window.open(sheetUrl, '_blank')
       
-      if (error) throw error
-      
-      await loadBookings()
-      alert('ยกเลิกการจองสำเร็จ!')
-    } catch (error) {
-      console.error('Error canceling booking:', error)
-      alert('เกิดข้อผิดพลาดในการยกเลิกการจอง')
+      // รีเฟรชข้อมูลหลังจาก 3 วินาที
+      setTimeout(() => {
+        loadBookings()
+      }, 3000)
     }
   }
 
   const exportToExcel = async () => {
     try {
+      // รีเฟรชข้อมูลก่อน export
       await loadBookings()
       
-      const timestamp = Date.now()
-      const response = await fetch(`/api/export?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
+      // ใช้ข้อมูลจาก state โดยตรง
+      const exportData = bookings.map(booking => ({
+        'หมายเลขโต๊ะ': booking.table_number,
+        'ชื่อผู้จอง': booking.guest_name,
+        'เบอร์โทรศัพท์': booking.phone_number,
+        'จำนวนคน': booking.party_size,
+        'วันที่จอง': booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.booking_date).toLocaleTimeString('th-TH') : '-',
+        'เวลาจ่ายเงิน': booking.payment_date ? new Date(booking.payment_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.payment_date).toLocaleTimeString('th-TH') : '-',
+        'โซน': booking.zone === 'inside' ? 'ด้านในหอประชุม' : 'ด้านนอกหอประชุม',
+        'สถานะการชำระ': booking.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองเฉยๆ',
+        'หมายเหตุ': booking.notes || '-'
+      }))
       
-      if (!response.ok) throw new Error('Export failed')
+      // สร้างไฟล์ CSV
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + Object.keys(exportData[0] || {}).join(',') + '\n'
+        + exportData.map(row => Object.values(row).join(',')).join('\n')
       
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.style.display = 'none'
-      a.href = url
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement("a")
+      link.setAttribute("href", encodedUri)
       
       const now = new Date()
       const timeString = `${now.toLocaleDateString('th-TH').replace(/\//g, '-')}_${now.toLocaleTimeString('th-TH').replace(/:/g, '-')}`
-      a.download = `รายการจองโต๊ะ_${timeString}.xlsx`
+      link.setAttribute("download", `รายการจองโต๊ะ_${timeString}.csv`)
       
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
       
       alert(`Export สำเร็จ! ข้อมูล ${bookings.length} รายการ`)
     } catch (error) {
@@ -305,7 +294,12 @@ export default function TableBookingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-purple-900">
-        <div className="text-xl text-white">กำลังโหลด...</div>
+        <div className="text-xl text-white text-center">
+          <div>กำลังโหลดข้อมูลจาก Google Sheets...</div>
+          <div className="text-sm mt-2 text-gray-300">
+            ✅ ใช้วิธี CSV Export ไม่ต้อง API Key
+          </div>
+        </div>
       </div>
     )
   }
@@ -433,12 +427,20 @@ export default function TableBookingPage() {
           {/* Controls */}
           <div className="flex justify-center space-x-2 sm:space-x-4 mb-4 sm:mb-8">
             {isAdmin && (
-              <button
-                onClick={exportToExcel}
-                className="bg-green-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
-              >
-                📊 Export Excel
-              </button>
+              <>
+                <button
+                  onClick={exportToExcel}
+                  className="bg-green-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
+                >
+                  📊 Export CSV
+                </button>
+                <button
+                  onClick={() => window.open('https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit', '_blank')}
+                  className="bg-purple-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition-colors font-bold text-sm sm:text-base"
+                >
+                  📝 แก้ไข Google Sheets
+                </button>
+              </>
             )}
             <button
               onClick={loadBookings}
@@ -565,6 +567,155 @@ export default function TableBookingPage() {
         <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
           <div className="bg-red-600 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-lg sm:text-xl font-bold transform -rotate-3 shadow-lg">
             Backdrop
+          </div>
+        </div>
+
+        {/* Google Sheets Data */}
+        <div className="mt-8 sm:mt-16 mb-8">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-yellow-300 text-xl sm:text-2xl font-bold">
+                📝 ข้อมูลจาก Google Sheets ({sheetData.length} รายการ)
+              </h2>
+              
+              {/* Sort Options */}
+              <div className="flex items-center space-x-2">
+                <span className="text-yellow-300 text-sm">เรียงตาม:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date' | 'payment_status')}
+                  className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  <option value="payment_status">สถานะการจ่าย</option>
+                  <option value="table_number">หมายเลขโต๊ะ</option>
+                  <option value="payment_date">เวลาจ่ายเงิน</option>
+                </select>
+              </div>
+            </div>
+            
+            {sheetData.length === 0 ? (
+              <div className="text-center text-gray-300 py-8">
+                ยังไม่มีข้อมูลจาก Google Sheets
+              </div>
+            ) : (
+              <div className="bg-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden">
+                <div className="max-h-96 overflow-y-auto">
+                  <table className="w-full table-auto">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          ชื่อ-สกุล
+                        </th>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          หมายเลขโต๊ะ
+                        </th>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          การชำระเงิน
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                          ผู้รับเงิน
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                          เวลาจ่าย
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                          เบอร์
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {sheetData
+                        .filter(entry => entry.guestName) // แสดงเฉพาะที่มีชื่อ
+                        .sort((a, b) => {
+                          if (sortBy === 'payment_status') {
+                            // จ่ายแล้วขึ้นก่อน
+                            const aStatus = a.paymentStatus.includes('จ่าย')
+                            const bStatus = b.paymentStatus.includes('จ่าย')
+                            if (aStatus !== bStatus) return bStatus ? 1 : -1
+                            return a.orderNumber - b.orderNumber
+                          } else if (sortBy === 'payment_date') {
+                            if (a.paymentDate && b.paymentDate) {
+                              return new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+                            }
+                            return a.paymentDate ? -1 : b.paymentDate ? 1 : 0
+                          } else {
+                            // เรียงตามหมายเลขโต๊ะแรก
+                            const aFirstTable = parseInt(a.tableNumbers.split(',')[0] || '999')
+                            const bFirstTable = parseInt(b.tableNumbers.split(',')[0] || '999')
+                            return aFirstTable - bFirstTable
+                          }
+                        })
+                        .map((entry, index) => (
+                          <tr 
+                            key={entry.orderNumber}
+                            className={`
+                              hover:bg-gray-50 transition-colors
+                              ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                            `}
+                          >
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {entry.guestName}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <div className="text-sm text-gray-900 font-bold text-blue-600">
+                                {entry.tableNumbers || '-'}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <span className={`
+                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                ${entry.paymentStatus.includes('จ่าย')
+                                  ? 'bg-green-100 text-green-800' 
+                                  : entry.paymentStatus
+                                    ? 'bg-orange-100 text-orange-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }
+                              `}>
+                                {entry.paymentStatus || 'ยังไม่กรอก'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 hidden sm:table-cell">
+                              <div className="text-sm text-gray-500">
+                                {entry.receiver || '-'}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 hidden md:table-cell">
+                              <div className="text-xs text-gray-500">
+                                {entry.paymentDate || '-'}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 hidden lg:table-cell">
+                              <div className="text-sm text-gray-500">
+                                {entry.phoneNumber || '-'}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Summary */}
+                <div className="px-4 py-3 bg-gray-50 border-t">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-gray-600">
+                      รวม {sheetData.length} รายการ
+                    </div>
+                    <div className="flex space-x-4">
+                      <span className="text-orange-600 font-medium">
+                        ยังไม่จ่าย: {sheetData.filter(s => !s.paymentStatus.includes('จ่าย')).length}
+                      </span>
+                      <span className="text-green-600 font-medium">
+                        จ่ายแล้ว: {sheetData.filter(s => s.paymentStatus.includes('จ่าย')).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -761,7 +912,7 @@ export default function TableBookingPage() {
                 {/* Mobile view additional info */}
                 <div className="sm:hidden p-4 bg-gray-50 border-t">
                   <div className="text-xs text-gray-600">
-                    💡 แตะแถวเพื่อดูรายละเอียดเพิ่มเติม
+                    💡 แตะแถวเพื่อดูรายละเอียดเพิ่มเติม (แอดมินแก้ไขใน Google Sheets)
                     <br />
                     📅 เรียงลำดับ: {sortBy === 'table_number' ? 'หมายเลขโต๊ะ' : sortBy === 'booking_date' ? 'เวลาจอง' : 'เวลาจ่ายเงิน'}
                   </div>
@@ -991,7 +1142,7 @@ function BookingModal({
               type="submit"
               className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
             >
-              {existingBooking ? 'บันทึกการแก้ไข' : 'จองโต๊ะ (2,000 บาท)'}
+              {existingBooking ? '📝 แก้ไขใน Google Sheets' : '📝 เพิ่มใน Google Sheets'}
             </button>
           </div>
         </form>
