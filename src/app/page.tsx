@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type TableBooking } from '@/lib/supabase'
+import AdminLogin from '@/components/AdminLogin'
+import DraggableTable from '@/components/DraggableTable'
 
 interface TableInfo {
   table_number: number
@@ -17,15 +19,41 @@ export default function TableBookingPage() {
   const [selectedTable, setSelectedTable] = useState<number | null>(null)
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isDragMode, setIsDragMode] = useState(false)
+  const [sortBy, setSortBy] = useState<'table_number' | 'booking_date' | 'payment_date'>('table_number')
 
   const initializeTables = (): TableInfo[] => {
     const tableData: TableInfo[] = []
+    
+    // กำหนดตำแหน่งเริ่มต้นของโต๊ะแต่ละโต๊ะ
+    const getInitialPosition = (tableNum: number) => {
+      if (tableNum <= 27) {
+        // โซนซ้าย (1-27) - 3 คอลัมน์ 9 แถว
+        const row = Math.floor((tableNum - 1) / 3)
+        const col = (tableNum - 1) % 3
+        return { x: col * 80 + 20, y: row * 70 + 100 }
+      } else if (tableNum <= 41) {
+        // โซนกลาง (28-41) - 2 คอลัมน์ 7 แถว
+        const adjustedNum = tableNum - 28
+        const row = Math.floor(adjustedNum / 2)
+        const col = adjustedNum % 2
+        return { x: col * 80 + 300, y: row * 70 + 150 }
+      } else {
+        // โซนขวา (42-62) - 3 คอลัมน์ 7 แถว
+        const adjustedNum = tableNum - 42
+        const row = Math.floor(adjustedNum / 3)
+        const col = adjustedNum % 3
+        return { x: col * 80 + 500, y: row * 70 + 100 }
+      }
+    }
     
     for (let i = 1; i <= 41; i++) {
       tableData.push({
         table_number: i,
         zone: 'inside',
-        position: { x: 0, y: 0 },
+        position: getInitialPosition(i),
         is_booked: false
       })
     }
@@ -34,7 +62,7 @@ export default function TableBookingPage() {
       tableData.push({
         table_number: i,
         zone: 'outside',
-        position: { x: 0, y: 0 },
+        position: getInitialPosition(i),
         is_booked: false
       })
     }
@@ -77,7 +105,67 @@ export default function TableBookingPage() {
     }
   }
 
+  const handleTableClick = (tableNumber: number) => {
+    if (!isAdmin) {
+      // ผู้เยี่ยมชมดูข้อมูลได้อย่างเดียว
+      const table = tables.find(t => t.table_number === tableNumber)
+      if (table?.is_booked) {
+        alert(`โต๊ะ ${tableNumber}\nผู้จอง: ${table.booking?.guest_name}\nสถานะ: ${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}`)
+      } else {
+        alert(`โต๊ะ ${tableNumber} ยังว่างอยู่`)
+      }
+      return
+    }
+    
+    // แอดมินสามารถแก้ไขได้
+    setSelectedTable(tableNumber)
+    setShowBookingForm(true)
+  }
+
+  const handlePositionChange = (tableNumber: number, newPosition: { x: number; y: number }) => {
+    if (!isAdmin) return
+    
+    setTables(prevTables => 
+      prevTables.map(table => 
+        table.table_number === tableNumber 
+          ? { ...table, position: newPosition }
+          : table
+      )
+    )
+  }
+
+  const handleLogin = (adminStatus: boolean) => {
+    setIsAdmin(adminStatus)
+    setIsLoggedIn(true)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin')
+    setIsAdmin(false)
+    setIsLoggedIn(false)
+  }
+
+  const resetTablePositions = () => {
+    if (!isAdmin) return
+    
+    if (confirm('ต้องการรีเซ็ตตำแหน่งโต๊ะทั้งหมดหรือไม่?')) {
+      const resetTables = initializeTables().map(initTable => {
+        const existingTable = tables.find(t => t.table_number === initTable.table_number)
+        return {
+          ...initTable,
+          is_booked: existingTable?.is_booked || false,
+          booking: existingTable?.booking
+        }
+      })
+      setTables(resetTables)
+    }
+  }
   const handleBooking = async (bookingData: Omit<TableBooking, 'id' | 'created_at'>) => {
+    if (!isAdmin) {
+      alert('ไม่มีสิทธิ์ในการจองโต๊ะ')
+      return
+    }
+    
     try {
       console.log('Submitting booking:', bookingData)
       const existingBooking = tables.find(t => t.table_number === bookingData.table_number)?.booking
@@ -112,6 +200,11 @@ export default function TableBookingPage() {
   }
 
   const handleCancelBooking = async (tableNumber: number) => {
+    if (!isAdmin) {
+      alert('ไม่มีสิทธิ์ในการยกเลิกการจอง')
+      return
+    }
+    
     if (!confirm('คุณต้องการยกเลิกการจองโต๊ะนี้หรือไม่?')) return
     
     try {
@@ -167,6 +260,13 @@ export default function TableBookingPage() {
   }
 
   useEffect(() => {
+    // ตรวจสอบสถานะล็อกอินจาก localStorage
+    const savedAdminStatus = localStorage.getItem('isAdmin')
+    if (savedAdminStatus !== null) {
+      setIsAdmin(savedAdminStatus === 'true')
+      setIsLoggedIn(true)
+    }
+    
     loadBookings()
     
     const interval = setInterval(() => {
@@ -183,6 +283,10 @@ export default function TableBookingPage() {
         <div className="text-xl text-white">กำลังโหลด...</div>
       </div>
     )
+  }
+
+  if (!isLoggedIn) {
+    return <AdminLogin onLogin={handleLogin} />
   }
 
   return (
@@ -268,177 +372,116 @@ export default function TableBookingPage() {
             </div>
           </div>
 
+          {/* Admin Controls */}
+          {isAdmin && (
+            <div className="flex justify-center space-x-2 sm:space-x-4 mb-4">
+              <button
+                onClick={() => setIsDragMode(!isDragMode)}
+                className={`px-3 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors font-bold text-sm sm:text-base ${
+                  isDragMode 
+                    ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                {isDragMode ? '🔒 ปิดการลาก' : '🔓 เปิดการลาก'} โต๊ะ
+              </button>
+              <button
+                onClick={resetTablePositions}
+                className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+              >
+                🔄 รีเซ็ตตำแหน่ง
+              </button>
+            </div>
+          )}
+
           {/* Controls */}
           <div className="flex justify-center space-x-2 sm:space-x-4 mb-4 sm:mb-8">
-            <button
-              onClick={exportToExcel}
-              className="bg-green-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
-            >
-              📊 Export Excel
-            </button>
+            {isAdmin && (
+              <button
+                onClick={exportToExcel}
+                className="bg-green-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
+              >
+                📊 Export Excel
+              </button>
+            )}
             <button
               onClick={loadBookings}
               className="bg-blue-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm sm:text-base"
             >
               🔄 รีเฟรช
             </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+            >
+              🚪 ออกจากระบบ
+            </button>
+          </div>
+
+          {/* User Status */}
+          <div className="text-center mb-4">
+            <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold ${
+              isAdmin 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-600 text-white'
+            }`}>
+              {isAdmin ? '👑 แอดมิน' : '👁️ ผู้เยี่ยมชม'} - 
+              {isAdmin ? ' สามารถจัดการทุกอย่างได้' : ' ดูข้อมูลอย่างเดียว'}
+            </span>
           </div>
         </div>
 
-        {/* Table Layout - ตามภาพเป๊ะๆ */}
+        {/* Table Layout - Draggable System */}
         <div className="max-w-7xl mx-auto px-2 sm:px-2">
-          <div className="flex justify-start items-start space-x-0.5 sm:space-x-4 mb-4 sm:mb-8 overflow-x-auto pb-4 pr-4" style={{ minWidth: '600px' }}>
-            {/* ฝั่งซ้าย (โต๊ะ 1-27) - 3 คอลัมน์ 9 แถว */}
-            <div className="grid grid-cols-3 gap-0 sm:gap-1 flex-shrink-0">
-              <div className="col-span-3 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
-                โซนด้านใน (โต๊ะ 1-27)
-              </div>
-              {Array.from({length: 27}, (_, i) => i + 1).map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                const getTableColor = () => {
-                  if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
-                  if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
-                  return 'bg-orange-500 hover:bg-orange-600'
-                }
-
-                const getStatusText = () => {
-                  if (!table?.is_booked) return 'ว่าง'
-                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
-                  return 'จองแล้ว'
-                }
-                
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      setSelectedTable(tableNum)
-                      setShowBookingForm(true)
-                    }}
-                    className={`
-                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
-                      ${getTableColor()}
-                    `}
-                    title={table?.is_booked ? 
-                      `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
-                      'คลิกเพื่อจอง'
-                    }
-                  >
-                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
-                    <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
-                    </div>
-                    <div className="text-xs opacity-80">{getStatusText()}</div>
-                  </button>
-                )
-              })}
+          <div className="relative bg-gray-900 bg-opacity-30 rounded-lg p-4 min-h-96" style={{ minHeight: '600px' }}>
+            {/* Grid Background (optional visual guide) */}
+            {isAdmin && isDragMode && (
+              <div className="absolute inset-0 opacity-20 pointer-events-none" 
+                   style={{
+                     backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+                     backgroundSize: '20px 20px'
+                   }}
+              />
+            )}
+            
+            {/* Zone Labels */}
+            <div className="absolute top-2 left-4 text-purple-300 font-bold text-xs sm:text-sm">
+              โซนด้านใน
             </div>
-
-            {/* ทางเดิน 1 */}
-            <div className="flex items-center justify-center h-48 sm:h-96 flex-shrink-0">
-              <div className="w-1 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
-                <div className="transform -rotate-90 text-orange-100 font-bold text-xs sm:text-sm whitespace-nowrap">
-                  ทางเดิน
+            <div className="absolute top-2 right-4 text-orange-300 font-bold text-xs sm:text-sm">
+              โซนด้านนอก
+            </div>
+            
+            {/* Stage */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+              <div className="w-32 sm:w-48 h-6 sm:h-8 bg-gradient-to-r from-yellow-600 to-yellow-800 rounded-lg shadow-lg relative">
+                <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border border-yellow-500 flex items-center justify-center">
+                  <div className="text-yellow-900 font-bold text-xs">🎭 เวที 🎭</div>
                 </div>
               </div>
             </div>
 
-            {/* กลาง (โต๊ะ 28-41) - 2 คอลัมน์ 7 แถว เริ่มจากแถวที่ 2 - ให้อยู่ระดับเดียวกับโต๊ะ 6 */}
-            <div className="grid grid-cols-2 gap-0 sm:gap-1 flex-shrink-0 pt-16 sm:pt-40">
-              <div className="col-span-2 text-center text-purple-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
-                โซนด้านใน (โต๊ะ 28-41)
-              </div>
-              {[28,29,30,31,32,33,34,35,36,37,38,39,40,41].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                const getTableColor = () => {
-                  if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
-                  if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
-                  return 'bg-orange-500 hover:bg-orange-600'
-                }
-
-                const getStatusText = () => {
-                  if (!table?.is_booked) return 'ว่าง'
-                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
-                  return 'จองแล้ว'
-                }
-                
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      setSelectedTable(tableNum)
-                      setShowBookingForm(true)
-                    }}
-                    className={`
-                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
-                      ${getTableColor()}
-                    `}
-                    title={table?.is_booked ? 
-                      `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
-                      'คลิกเพื่อจอง'
-                    }
-                  >
-                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
-                    <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
-                    </div>
-                    <div className="text-xs opacity-80">{getStatusText()}</div>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* ทางเดิน 2 */}
-            <div className="flex items-center justify-center h-48 sm:h-96 flex-shrink-0">
-              <div className="w-1 sm:w-6 h-48 sm:h-96 bg-orange-500 rounded-full relative flex items-center justify-center">
-                <div className="transform -rotate-90 text-orange-100 font-bold text-xs sm:text-sm whitespace-nowrap">
-                  ทางเดิน
-                </div>
-              </div>
-            </div>
-
-            {/* ฝั่งขวา (โต๊ะ 42-62) - 3 คอลัมน์ 7 แถว ตามภาพเป๊ะๆ */}
-            <div className="grid grid-cols-3 gap-0 sm:gap-1 flex-shrink-0">
-              <div className="col-span-3 text-center text-orange-300 font-bold mb-1 sm:mb-2 text-xs sm:text-base">
-                โซนด้านนอก (โต๊ะ 42-62)
-              </div>
-              {[42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62].map((tableNum) => {
-                const table = tables.find(t => t.table_number === tableNum)
-                const getTableColor = () => {
-                  if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
-                  if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
-                  return 'bg-orange-500 hover:bg-orange-600'
-                }
-
-                const getStatusText = () => {
-                  if (!table?.is_booked) return 'ว่าง'
-                  if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
-                  return 'จองแล้ว'
-                }
-                
-                return (
-                  <button
-                    key={tableNum}
-                    onClick={() => {
-                      setSelectedTable(tableNum)
-                      setShowBookingForm(true)
-                    }}
-                    className={`
-                      w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs transition-all hover:scale-105 border border-white/20 flex flex-col items-center justify-center p-1
-                      ${getTableColor()}
-                    `}
-                    title={table?.is_booked ? 
-                      `${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}: ${table.booking?.guest_name}` : 
-                      'คลิกเพื่อจอง'
-                    }
-                  >
-                    <div className="text-xs font-bold">โต๊ะ {tableNum}</div>
-                    <div className="text-xs text-center leading-tight overflow-hidden">
-                      {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
-                    </div>
-                    <div className="text-xs opacity-80">{getStatusText()}</div>
-                  </button>
-                )
-              })}
+            {/* Draggable Tables */}
+            {tables.map((table) => (
+              <DraggableTable
+                key={table.table_number}
+                tableNumber={table.table_number}
+                table={table}
+                isAdmin={isAdmin && isDragMode}
+                onTableClick={handleTableClick}
+                position={table.position}
+                onPositionChange={handlePositionChange}
+              />
+            ))}
+            
+            {/* Instructions */}
+            <div className="absolute bottom-2 left-2 text-xs text-gray-400">
+              {isAdmin 
+                ? isDragMode 
+                  ? '🖱️ ลากโต๊ะเพื่อย้าย คลิกเพื่อจอง'
+                  : '🔒 โหมดล็อก - คลิกโต๊ะเพื่อจอง'
+                : '👁️ คลิกโต๊ะเพื่อดูข้อมูล'
+              }
             </div>
           </div>
         </div>
@@ -531,8 +574,10 @@ export default function TableBookingPage() {
                               ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                             `}
                             onClick={() => {
-                              setSelectedTable(booking.table_number)
-                              setShowBookingForm(true)
+                              if (isAdmin) {
+                                setSelectedTable(booking.table_number)
+                                setShowBookingForm(true)
+                              }
                             }}
                           >
                             <td className="px-3 py-2 whitespace-nowrap">
@@ -656,7 +701,7 @@ export default function TableBookingPage() {
       </div>
 
       {/* Modal สำหรับจองโต๊ะ */}
-      {showBookingForm && selectedTable && (
+      {showBookingForm && selectedTable && isAdmin && (
         <BookingModal
           tableNumber={selectedTable}
           zone={selectedTable <= 41 ? 'inside' : 'outside'}
