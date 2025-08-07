@@ -137,12 +137,18 @@ export default function TableBookingPage() {
   const handleLogin = (adminStatus: boolean) => {
     setIsAdmin(adminStatus)
     setIsLoggedIn(true)
+    // บันทึกสถานะแอดมินใน localStorage
+    localStorage.setItem('isAdmin', adminStatus.toString())
   }
 
   const handleLogout = () => {
     localStorage.removeItem('isAdmin')
     setIsAdmin(false)
-    setIsLoggedIn(false)
+    setIsLoggedIn(true) // กลับไปเป็นผู้เยี่ยมชม ไม่ต้องกลับไปหน้า login
+  }
+
+  const showAdminLogin = () => {
+    setIsLoggedIn(false) // แสดงหน้า login
   }
 
   const resetTablePositions = () => {
@@ -170,11 +176,22 @@ export default function TableBookingPage() {
       console.log('Submitting booking:', bookingData)
       const existingBooking = tables.find(t => t.table_number === bookingData.table_number)?.booking
       
+      // เพิ่ม payment_date ถ้าสถานะเป็น paid
+      const finalBookingData = {
+        ...bookingData,
+        payment_date: bookingData.payment_status === 'paid' 
+          ? (existingBooking?.payment_status === 'paid' && existingBooking?.payment_date 
+              ? existingBooking.payment_date  // ใช้วันที่เดิมถ้าจ่ายไปแล้ว
+              : new Date().toISOString()       // บันทึกเวลาใหม่ถ้าเพิ่งจ่าย
+            )
+          : null  // ลบ payment_date ถ้าเปลี่ยนเป็น booked
+      }
+      
       if (existingBooking) {
         console.log('Updating existing booking')
         const { error } = await supabase
           .from('table_bookings')
-          .update(bookingData)
+          .update(finalBookingData)
           .eq('table_number', bookingData.table_number)
         
         if (error) throw error
@@ -183,7 +200,7 @@ export default function TableBookingPage() {
         console.log('Creating new booking')
         const { error } = await supabase
           .from('table_bookings')
-          .insert([bookingData])
+          .insert([finalBookingData])
         
         if (error) throw error
         alert('จองโต๊ะสำเร็จ!')
@@ -260,12 +277,20 @@ export default function TableBookingPage() {
   }
 
   useEffect(() => {
-    // ตรวจสอบสถานะล็อกอินจาก localStorage
-    const savedAdminStatus = localStorage.getItem('isAdmin')
-    if (savedAdminStatus !== null) {
-      setIsAdmin(savedAdminStatus === 'true')
-      setIsLoggedIn(true)
+    // เริ่มต้นให้แสดงแบบผู้เยี่ยมชมเสมอ
+    setIsLoggedIn(true)
+    setIsAdmin(false)
+    
+    // ตรวจสอบสถานะแอดมินจาก localStorage หลังจาก component โหลดเสร็จ
+    const checkAdminStatus = () => {
+      const savedAdminStatus = localStorage.getItem('isAdmin')
+      if (savedAdminStatus === 'true') {
+        setIsAdmin(true)
+      }
     }
+    
+    // ใช้ setTimeout เพื่อให้ UI แสดงแบบผู้เยี่ยมชมก่อน
+    setTimeout(checkAdminStatus, 100)
     
     loadBookings()
     
@@ -341,6 +366,17 @@ export default function TableBookingPage() {
       </div>
 
       <div className="relative z-10 p-2 sm:p-4">
+        {/* Hidden Admin Access Button */}
+        {!isAdmin && (
+          <button
+            onClick={showAdminLogin}
+            className="fixed top-4 left-4 w-8 h-8 bg-gray-800 bg-opacity-50 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-all duration-200 text-xs z-50"
+            title="เข้าสู่ระบบแอดมิน"
+          >
+            🔐
+          </button>
+        )}
+
         {/* Header */}
         <div className="text-center mb-4 sm:mb-8 mt-8 sm:mt-16">
           <div className="flex flex-col sm:flex-row justify-center items-center mb-2 sm:mb-4">
@@ -410,12 +446,21 @@ export default function TableBookingPage() {
             >
               🔄 รีเฟรช
             </button>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
-            >
-              🚪 ออกจากระบบ
-            </button>
+            {isAdmin ? (
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+              >
+                🚪 ออกจากระบบ
+              </button>
+            ) : (
+              <button
+                onClick={showAdminLogin}
+                className="bg-purple-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition-colors font-bold text-sm sm:text-base"
+              >
+                👑 เข้าสู่ระบบแอดมิน
+              </button>
+            )}
           </div>
 
           {/* User Status */}
@@ -526,9 +571,25 @@ export default function TableBookingPage() {
         {/* Booking List */}
         <div className="mt-8 sm:mt-16 mb-20">
           <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-center text-yellow-300 text-xl sm:text-2xl font-bold mb-6">
-              📋 รายชื่อผู้จอง ({bookings.length} โต๊ะ)
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-yellow-300 text-xl sm:text-2xl font-bold">
+                📋 รายชื่อผู้จอง ({bookings.length} โต๊ะ)
+              </h2>
+              
+              {/* Sort Options */}
+              <div className="flex items-center space-x-2">
+                <span className="text-yellow-300 text-sm">เรียงตาม:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date')}
+                  className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  <option value="table_number">หมายเลขโต๊ะ</option>
+                  <option value="booking_date">เวลาจอง</option>
+                  <option value="payment_date">เวลาจ่ายเงิน</option>
+                </select>
+              </div>
+            </div>
             
             {bookings.length === 0 ? (
               <div className="text-center text-gray-300 py-8">
@@ -559,13 +620,39 @@ export default function TableBookingPage() {
                           สถานะ
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                          เวลาจอง
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden xl:table-cell">
+                          เวลาจ่ายเงิน
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
                           หมายเหตุ
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {bookings
-                        .sort((a, b) => a.table_number - b.table_number)
+                        .sort((a, b) => {
+                          if (sortBy === 'table_number') {
+                            return a.table_number - b.table_number
+                          } else if (sortBy === 'booking_date') {
+                            return new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
+                          } else if (sortBy === 'payment_date') {
+                            // จ่ายแล้วขึ้นก่อน แล้วเรียงตามเวลาจ่าย
+                            if (a.payment_status === 'paid' && b.payment_status === 'paid') {
+                              if (a.payment_date && b.payment_date) {
+                                return new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+                              }
+                              return 0
+                            } else if (a.payment_status === 'paid') {
+                              return -1
+                            } else if (b.payment_status === 'paid') {
+                              return 1
+                            }
+                            return a.table_number - b.table_number
+                          }
+                          return 0
+                        })
                         .map((booking, index) => (
                           <tr 
                             key={booking.table_number}
@@ -628,6 +715,38 @@ export default function TableBookingPage() {
                               </span>
                             </td>
                             <td className="px-3 py-2 hidden lg:table-cell">
+                              <div className="text-xs text-gray-500">
+                                {new Date(booking.booking_date).toLocaleDateString('th-TH', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                                <br />
+                                {new Date(booking.booking_date).toLocaleTimeString('th-TH', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 hidden xl:table-cell">
+                              <div className="text-xs text-gray-500">
+                                {booking.payment_date ? (
+                                  <>
+                                    {new Date(booking.payment_date).toLocaleDateString('th-TH', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                    <br />
+                                    {new Date(booking.payment_date).toLocaleTimeString('th-TH', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </>
+                                ) : '-'}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 hidden lg:table-cell">
                               <div className="text-sm text-gray-500 max-w-xs truncate" title={booking.notes || ''}>
                                 {booking.notes || '-'}
                               </div>
@@ -643,6 +762,8 @@ export default function TableBookingPage() {
                 <div className="sm:hidden p-4 bg-gray-50 border-t">
                   <div className="text-xs text-gray-600">
                     💡 แตะแถวเพื่อดูรายละเอียดเพิ่มเติม
+                    <br />
+                    📅 เรียงลำดับ: {sortBy === 'table_number' ? 'หมายเลขโต๊ะ' : sortBy === 'booking_date' ? 'เวลาจอง' : 'เวลาจ่ายเงิน'}
                   </div>
                 </div>
                 

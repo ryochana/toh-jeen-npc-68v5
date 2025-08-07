@@ -18,14 +18,15 @@ export async function GET() {
     console.log(`Export: Found ${bookings?.length || 0} bookings`)
 
     // สร้าง Excel data
-    const headers = ['หมายเลขโต๊ะ', 'ชื่อผู้จอง', 'เบอร์โทรศัพท์', 'จำนวนคน', 'วันที่จอง', 'โซน', 'สถานะการชำระ', 'หมายเหตุ']
+    const headers = ['หมายเลขโต๊ะ', 'ชื่อผู้จอง', 'เบอร์โทรศัพท์', 'จำนวนคน', 'วันที่จอง', 'เวลาจ่ายเงิน', 'โซน', 'สถานะการชำระ', 'หมายเหตุ']
     
     const excelRows = bookings?.map((booking: TableBooking) => [
       booking.table_number,
       booking.guest_name,
       booking.phone_number,
       booking.party_size,
-      new Date(booking.booking_date).toLocaleDateString('th-TH'),
+      new Date(booking.booking_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.booking_date).toLocaleTimeString('th-TH'),
+      booking.payment_date ? (new Date(booking.payment_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.payment_date).toLocaleTimeString('th-TH')) : '-',
       booking.zone === 'inside' ? 'ด้านในหอประชุม' : 'ด้านนอกหอประชุม',
       booking.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองเฉยๆ',
       booking.notes || '-'
