@@ -250,6 +250,15 @@ export default function TableBookingPage() {
 
       if (!response.ok) {
         const error = await response.json()
+        
+        // ตรวจสอบว่าเป็น error เรื่อง URL ไหม
+        if (error.error?.includes('API Key') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
+          alert('⚠️ ระบบบันทึกยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Sheets API Key ก่อน:\n\n1. ไป Google Cloud Console\n2. เปิด Google Sheets API\n3. สร้าง API Key\n4. ใส่ใน .env.local\n\nหรือแก้ไขข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
+          setShowSheetForm(false)
+          setSelectedSheetEntry(null)
+          return
+        }
+        
         throw new Error(error.error || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล')
       }
 
@@ -281,6 +290,13 @@ export default function TableBookingPage() {
 
       if (!response.ok) {
         const error = await response.json()
+        
+        // ตรวจสอบว่าเป็น error เรื่อง URL ไหม
+        if (error.error?.includes('API Key') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
+          alert('⚠️ ระบบลบข้อมูลยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Sheets API Key ก่อน:\n\n1. ไป Google Cloud Console\n2. เปิด Google Sheets API\n3. สร้าง API Key\n4. ใส่ใน .env.local\n\nหรือลบข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
+          return
+        }
+        
         throw new Error(error.error || 'เกิดข้อผิดพลาดในการลบข้อมูล')
       }
 

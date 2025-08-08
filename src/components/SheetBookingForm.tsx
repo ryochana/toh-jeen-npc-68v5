@@ -49,6 +49,17 @@ export default function SheetBookingForm({
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* คำเตือนระบบบันทึก */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <div className="text-orange-500 text-lg">⚠️</div>
+              <div className="text-sm text-orange-700">
+                <div className="font-medium mb-1">การบันทึกข้อมูล</div>
+                <div>ระบบบันทึกอัตโนมัติยังไม่พร้อม หากไม่สามารถบันทึกได้ กรุณาแก้ไขข้อมูลใน Google Sheets โดยตรง</div>
+              </div>
+            </div>
+          </div>
+
           {/* ชื่อ-สกุล */}
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
@@ -154,6 +165,13 @@ export default function SheetBookingForm({
             >
               ยกเลิก
             </button>
+            <button
+              type="button"
+              onClick={() => window.open('https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit', '_blank')}
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+            >
+              📝 แก้ไขใน Google Sheets
+            </button>
             {existingBooking && onDelete && (
               <button
                 type="button"
@@ -172,7 +190,7 @@ export default function SheetBookingForm({
               type="submit"
               className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
             >
-              {existingBooking ? 'บันทึกการแก้ไข' : 'เพิ่มข้อมูล'}
+              {existingBooking ? 'บันทึกการแก้ไข' : 'บันทึกการแก้ไข'}
             </button>
           </div>
         </form>
