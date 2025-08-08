@@ -252,8 +252,8 @@ export default function TableBookingPage() {
         const error = await response.json()
         
         // ตรวจสอบว่าเป็น error เรื่อง URL ไหม
-        if (error.error?.includes('API Key') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
-          alert('⚠️ ระบบบันทึกยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Sheets API Key ก่อน:\n\n1. ไป Google Cloud Console\n2. เปิด Google Sheets API\n3. สร้าง API Key\n4. ใส่ใน .env.local\n\nหรือแก้ไขข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
+        if (error.error?.includes('URL') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
+          alert('⚠️ ระบบบันทึกยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Apps Script ก่อน:\n1. เปิด Google Sheets\n2. ไป Extensions > Apps Script\n3. วางโค้ด และ Deploy\n4. ใส่ URL ใน .env.local\n\nหรือแก้ไขข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
           setShowSheetForm(false)
           setSelectedSheetEntry(null)
           return
@@ -292,8 +292,8 @@ export default function TableBookingPage() {
         const error = await response.json()
         
         // ตรวจสอบว่าเป็น error เรื่อง URL ไหม
-        if (error.error?.includes('API Key') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
-          alert('⚠️ ระบบลบข้อมูลยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Sheets API Key ก่อน:\n\n1. ไป Google Cloud Console\n2. เปิด Google Sheets API\n3. สร้าง API Key\n4. ใส่ใน .env.local\n\nหรือลบข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
+        if (error.error?.includes('URL') || error.error?.includes('ยังไม่ได้ตั้งค่า')) {
+          alert('⚠️ ระบบลบข้อมูลยังไม่พร้อมใช้งาน\n\nต้องตั้งค่า Google Apps Script ก่อน:\n1. เปิด Google Sheets\n2. ไป Extensions > Apps Script\n3. วางโค้ด และ Deploy\n4. ใส่ URL ใน .env.local\n\nหรือลบข้อมูลใน Google Sheets โดยตรง:\nhttps://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit')
           return
         }
         
@@ -477,15 +477,6 @@ export default function TableBookingPage() {
             และร่วมพิธีมุฑิตาจิตคุณครูรุ่งนภา เชิงกลาง เนื่องในโอกาสเกษียณอายุราชการ
           </div>
 
-          {/* Stage */}
-          <div className="mb-4 sm:mb-8">
-            <div className="w-48 sm:w-96 h-8 sm:h-16 bg-gradient-to-r from-yellow-600 to-yellow-800 mx-auto rounded-lg shadow-lg relative">
-              <div className="w-full h-full bg-gradient-to-b from-yellow-400 to-yellow-700 rounded-lg border-2 sm:border-4 border-yellow-500 flex items-center justify-center">
-                <div className="text-yellow-900 font-bold text-xs sm:text-lg">🎭 เวที 🎭</div>
-              </div>
-            </div>
-          </div>
-
           {/* Admin Controls */}
           {isAdmin && (
             <div className="flex justify-center space-x-2 sm:space-x-4 mb-4">
@@ -518,28 +509,19 @@ export default function TableBookingPage() {
                 >
                   📝 แก้ไข Google Sheets
                 </button>
+                <button
+                  onClick={loadBookings}
+                  className="bg-blue-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm sm:text-base"
+                >
+                  🔄 รีเฟรช
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+                >
+                  🚪 ออกจากระบบ
+                </button>
               </>
-            )}
-            <button
-              onClick={loadBookings}
-              className="bg-blue-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm sm:text-base"
-            >
-              🔄 รีเฟรช
-            </button>
-            {isAdmin ? (
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
-              >
-                🚪 ออกจากระบบ
-              </button>
-            ) : (
-              <button
-                onClick={showAdminLogin}
-                className="bg-purple-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition-colors font-bold text-sm sm:text-base"
-              >
-                👑 เข้าสู่ระบบแอดมิน
-              </button>
             )}
           </div>
 
