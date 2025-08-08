@@ -28,16 +28,7 @@ export default function SheetBookingForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.guestName.trim()) {
-      alert('กรุณากรอกชื่อ-สกุล')
-      return
-    }
-
-    if (!formData.tableNumbers.trim()) {
-      alert('กรุณากรอกหมายเลขโต๊ะ')
-      return
-    }
-
+    // ไม่บังคับฟิลด์ไหนเลย เอา validation ออกหมด
     onSubmit({
       orderNumber: formData.orderNumber,
       guestName: formData.guestName.trim(),
@@ -61,7 +52,7 @@ export default function SheetBookingForm({
           {/* ชื่อ-สกุล */}
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              ชื่อ-สกุล *
+              ชื่อ-สกุล
             </label>
             <input
               type="text"
@@ -69,7 +60,6 @@ export default function SheetBookingForm({
               onChange={(e) => setFormData(prev => ({ ...prev, guestName: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
               placeholder="เช่น คุณสมชาย ใจดี"
-              required
             />
           </div>
 
@@ -78,7 +68,7 @@ export default function SheetBookingForm({
           {/* การชำระเงิน */}
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              การชำระเงิน *
+              การชำระเงิน
             </label>
             <select
               value={formData.paymentStatus}
@@ -97,7 +87,7 @@ export default function SheetBookingForm({
           {/* หมายเลขโต๊ะ */}
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              หมายเลขโต๊ะ *
+              หมายเลขโต๊ะ
             </label>
             <input
               type="text"
@@ -105,7 +95,6 @@ export default function SheetBookingForm({
               onChange={(e) => setFormData(prev => ({ ...prev, tableNumbers: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
               placeholder="เช่น 5,6,7 หรือ 12"
-              required
             />
             <div className="text-xs text-gray-500 mt-1">
               💡 สำหรับหลายโต๊ะ ให้แยกด้วยเครื่องหมายจุลภาค เช่น 5,6,7

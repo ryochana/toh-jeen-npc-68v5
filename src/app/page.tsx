@@ -697,6 +697,9 @@ export default function TableBookingPage() {
                   <table className="w-full table-auto">
                     <thead className="bg-gray-100 sticky top-0">
                       <tr>
+                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          ลำดับ
+                        </th>
                         <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                           ชื่อ-สกุล
                         </th>
@@ -750,6 +753,11 @@ export default function TableBookingPage() {
                             onClick={() => handleSheetEntryClick(entry)}
                             title={isAdmin ? 'คลิกเพื่อแก้ไข' : 'คลิกเพื่อดูรายละเอียด'}
                           >
+                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <div className="text-sm font-bold text-gray-700">
+                                {entry.orderNumber}
+                              </div>
+                            </td>
                             <td className="px-3 py-2 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
                                 {entry.guestName}
