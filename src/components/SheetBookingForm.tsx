@@ -73,20 +73,7 @@ export default function SheetBookingForm({
             />
           </div>
 
-          {/* จำนวนคน */}
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
-              จำนวนคน
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="50"
-              value={formData.partySize}
-              onChange={(e) => setFormData(prev => ({ ...prev, partySize: parseInt(e.target.value) }))}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-            />
-          </div>
+
 
           {/* การชำระเงิน */}
           <div>

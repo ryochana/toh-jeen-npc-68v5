@@ -24,8 +24,6 @@ export default function TableBookingPage() {
   const [sortBy, setSortBy] = useState<'table_number' | 'booking_date' | 'payment_date' | 'payment_status'>('payment_status')
   const [showSheetForm, setShowSheetForm] = useState(false)
   const [selectedSheetEntry, setSelectedSheetEntry] = useState<SheetBooking | null>(null)
-  const [selectedTable, setSelectedTable] = useState<number | null>(null)
-  const [showTableModal, setShowTableModal] = useState(false)
 
   const initializeTables = (): TableInfo[] => {
     const tableData: TableInfo[] = []
@@ -120,9 +118,28 @@ export default function TableBookingPage() {
       return
     }
     
-    // แอดมินสามารถแก้ไขได้
-    setSelectedTable(tableNumber)
-    setShowTableModal(true)
+    // แอดมินเปิด SheetBookingForm เลย
+    const table = tables.find(t => t.table_number === tableNumber)
+    
+    if (table?.is_booked && table.booking) {
+      // ถ้าโต๊ะมีการจองแล้ว ให้แก้ไขข้อมูลเดิม
+      setSelectedSheetEntry(table.booking)
+    } else {
+      // ถ้าโต๊ะว่าง ให้สร้างข้อมูลใหม่
+      const nextOrderNumber = Math.max(...sheetData.map(s => s.orderNumber), 0) + 1
+      setSelectedSheetEntry({
+        orderNumber: nextOrderNumber,
+        guestName: '',
+        partySize: 8,
+        paymentStatus: '',
+        tableNumbers: tableNumber.toString(),
+        receiver: '',
+        paymentDate: '',
+        phoneNumber: ''
+      })
+    }
+    
+    setShowSheetForm(true)
   }
 
   const handlePositionChange = (tableNumber: number, newPosition: { x: number; y: number }) => {
@@ -844,88 +861,7 @@ export default function TableBookingPage() {
           onDelete={handleSheetDelete}
         />
       )}
-
-      {/* Modal สำหรับจัดการโต๊ะ */}
-      {showTableModal && selectedTable && isAdmin && (
-        <TableModal
-          tableNumber={selectedTable}
-          zone={selectedTable <= 41 ? 'inside' : 'outside'}
-          table={tables.find(t => t.table_number === selectedTable)}
-          onClose={() => {
-            setShowTableModal(false)
-            setSelectedTable(null)
-          }}
-        />
-      )}
     </div>
   )
 }
 
-function TableModal({ 
-  tableNumber, 
-  zone, 
-  table,
-  onClose
-}: {
-  tableNumber: number
-  zone: 'inside' | 'outside'
-  table: any
-  onClose: () => void
-}) {
-  const handleEditInSheets = () => {
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit'
-    window.open(sheetUrl, '_blank')
-    onClose()
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">
-          โต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
-        </h3>
-        
-        <div className="space-y-4">
-          {table?.is_booked ? (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">ข้อมูลการจอง:</h4>
-              <div className="space-y-1 text-sm">
-                <div><strong>ชื่อผู้จอง:</strong> {table.booking?.guestName || '-'}</div>
-                <div><strong>เบอร์โทร:</strong> {table.booking?.phoneNumber || '-'}</div>
-                <div><strong>จำนวนคน:</strong> {table.booking?.partySize || '-'} คน</div>
-                <div><strong>สถานะ:</strong> 
-                  <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                    table.booking?.paymentStatus?.includes('จ่าย') 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-orange-100 text-orange-800'
-                  }`}>
-                    {table.booking?.paymentStatus?.includes('จ่าย') ? 'จ่ายแล้ว' : 'จองแล้ว'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-purple-700">โต๊ะนี้ยังว่างอยู่</p>
-            </div>
-          )}
-
-          <div className="flex space-x-4 pt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              ปิด
-            </button>
-            <button
-              onClick={handleEditInSheets}
-              className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              📝 แก้ไขใน Google Sheets
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
