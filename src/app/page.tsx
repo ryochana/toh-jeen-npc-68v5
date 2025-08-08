@@ -459,21 +459,21 @@ export default function TableBookingPage() {
         <div className="text-center mb-4 sm:mb-8 mt-8 sm:mt-16">
           <div className="flex flex-col sm:flex-row justify-center items-center mb-2 sm:mb-4">
             <div className="flex items-center mb-2 sm:mb-0">
-              <div className="text-pink-300 text-lg sm:text-2xl mr-2">รวม❤️</div>
-              <div className="text-pink-400 text-2xl sm:text-4xl font-bold">ศิษย์เก่า</div>
+              <div className="text-pink-300 text-xl sm:text-3xl mr-2 font-medium">รวม❤️</div>
+              <div className="text-pink-400 text-3xl sm:text-5xl font-bold">ศิษย์เก่า</div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-center items-center mb-2 sm:mb-4">
             <div className="flex items-center mb-2 sm:mb-0">
-              <div className="text-blue-300 text-lg sm:text-2xl mr-2">คืนสู่เหย้า</div>
-              <div className="text-yellow-400 text-2xl sm:text-4xl font-bold">ชาวเหลืองฟ้า</div>
+              <div className="text-blue-300 text-xl sm:text-3xl mr-2 font-medium">คืนสู่เหย้า</div>
+              <div className="text-yellow-400 text-3xl sm:text-5xl font-bold">ชาวเหลืองฟ้า</div>
             </div>
-            <div className="bg-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:ml-4 transform -rotate-12">
-              <div className="text-xs sm:text-sm">โต๊ะจีน</div>
-              <div className="text-sm sm:text-lg font-bold">โต๊ะละ 2,000 บาท</div>
+            <div className="bg-red-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:ml-4 transform -rotate-12">
+              <div className="text-sm sm:text-base font-medium">โต๊ะจีน</div>
+              <div className="text-lg sm:text-2xl font-bold">โต๊ะละ 2,000 บาท</div>
             </div>
           </div>
-          <div className="text-yellow-300 text-sm sm:text-lg mb-2 sm:mb-4 px-2">
+          <div className="text-yellow-300 text-base sm:text-xl mb-2 sm:mb-4 px-2 font-light">
             และร่วมพิธีมุฑิตาจิตคุณครูรุ่งนภา เชิงกลาง เนื่องในโอกาสเกษียณอายุราชการ
           </div>
 
@@ -482,7 +482,7 @@ export default function TableBookingPage() {
             <div className="flex justify-center space-x-2 sm:space-x-4 mb-4">
               <button
                 onClick={() => setIsDragMode(!isDragMode)}
-                className={`px-3 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors font-bold text-sm sm:text-base ${
+                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-lg transition-colors font-medium text-base sm:text-lg ${
                   isDragMode 
                     ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
                     : 'bg-gray-600 text-white hover:bg-gray-700'
@@ -492,7 +492,7 @@ export default function TableBookingPage() {
               </button>
               <button
                 onClick={resetTablePositions}
-                className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+                className="bg-red-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-red-700 transition-colors font-medium text-base sm:text-lg"
               >
                 🔄 รีเซ็ตตำแหน่ง
               </button>
@@ -505,19 +505,19 @@ export default function TableBookingPage() {
               <>
                 <button
                   onClick={() => window.open('https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit', '_blank')}
-                  className="bg-purple-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition-colors font-bold text-sm sm:text-base"
+                  className="bg-purple-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium text-base sm:text-lg"
                 >
                   📝 แก้ไข Google Sheets
                 </button>
                 <button
                   onClick={loadBookings}
-                  className="bg-blue-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm sm:text-base"
+                  className="bg-blue-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-base sm:text-lg"
                 >
                   🔄 รีเฟรช
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="bg-red-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm sm:text-base"
+                  className="bg-red-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-red-700 transition-colors font-medium text-base sm:text-lg"
                 >
                   🚪 ออกจากระบบ
                 </button>
@@ -527,7 +527,7 @@ export default function TableBookingPage() {
 
           {/* User Status */}
           <div className="text-center mb-4">
-            <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold ${
+            <span className={`inline-block px-6 py-3 rounded-lg text-base font-medium ${
               isAdmin 
                 ? 'bg-green-600 text-white' 
                 : 'bg-gray-600 text-white'
@@ -654,7 +654,7 @@ export default function TableBookingPage() {
         <div className="mt-8 sm:mt-16 mb-8">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-yellow-300 text-xl sm:text-2xl font-bold">
+              <h2 className="text-yellow-300 text-2xl sm:text-3xl font-bold">
                 📝 ข้อมูลจาก Google Sheets ({sheetData.length} รายการ)
               </h2>
               
@@ -663,7 +663,7 @@ export default function TableBookingPage() {
                 {isAdmin && (
                   <button
                     onClick={addNewSheetEntry}
-                    className="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors text-sm font-bold"
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-base font-medium"
                   >
                     ➕ เพิ่มใหม่
                   </button>
@@ -671,11 +671,11 @@ export default function TableBookingPage() {
                 
                 {/* Sort Options */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-yellow-300 text-sm">เรียงตาม:</span>
+                  <span className="text-yellow-300 text-base font-medium">เรียงตาม:</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date' | 'payment_status')}
-                    className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-yellow-500 font-sarabun"
                   >
                     <option value="payment_status">สถานะการจ่าย</option>
                     <option value="table_number">หมายเลขโต๊ะ</option>
@@ -695,25 +695,25 @@ export default function TableBookingPage() {
                   <table className="w-full table-auto">
                     <thead className="bg-gray-100 sticky top-0">
                       <tr>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
                           ลำดับ
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                           ชื่อ-สกุล
                         </th>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
                           หมายเลขโต๊ะ
                         </th>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">
                           การชำระเงิน
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
                           ผู้รับเงิน
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">
                           เวลาจ่าย
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
                           เบอร์
                         </th>
                       </tr>
@@ -751,24 +751,24 @@ export default function TableBookingPage() {
                             onClick={() => handleSheetEntryClick(entry)}
                             title={isAdmin ? 'คลิกเพื่อแก้ไข' : 'คลิกเพื่อดูรายละเอียด'}
                           >
-                            <td className="px-3 py-2 whitespace-nowrap text-center">
-                              <div className="text-sm font-bold text-gray-700">
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <div className="text-base font-semibold text-gray-700">
                                 {entry.orderNumber}
                               </div>
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-base font-medium text-gray-900">
                                 {entry.guestName}
                               </div>
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-center">
-                              <div className="text-sm text-gray-900 font-bold text-blue-600">
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <div className="text-base text-gray-900 font-semibold text-blue-600">
                                 {entry.tableNumbers || '-'}
                               </div>
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
                               <span className={`
-                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                inline-flex px-3 py-1 text-sm font-medium rounded-full
                                 ${entry.paymentStatus.includes('จ่าย')
                                   ? 'bg-green-100 text-green-800' 
                                   : entry.paymentStatus
@@ -779,17 +779,17 @@ export default function TableBookingPage() {
                                 {entry.paymentStatus || 'ยังไม่กรอก'}
                               </span>
                             </td>
-                            <td className="px-3 py-2 hidden sm:table-cell">
+                            <td className="px-4 py-3 hidden sm:table-cell">
                               <div className="text-sm text-gray-500">
                                 {entry.receiver || '-'}
                               </div>
                             </td>
-                            <td className="px-3 py-2 hidden md:table-cell">
-                              <div className="text-xs text-gray-500">
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              <div className="text-sm text-gray-500">
                                 {entry.paymentDate || '-'}
                               </div>
                             </td>
-                            <td className="px-3 py-2 hidden lg:table-cell">
+                            <td className="px-4 py-3 hidden lg:table-cell">
                               <div className="text-sm text-gray-500">
                                 {entry.phoneNumber || '-'}
                               </div>
@@ -802,16 +802,16 @@ export default function TableBookingPage() {
                 </div>
                 
                 {/* Summary */}
-                <div className="px-4 py-3 bg-gray-50 border-t">
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="text-gray-600">
+                <div className="px-6 py-4 bg-gray-50 border-t">
+                  <div className="flex justify-between items-center text-base">
+                    <div className="text-gray-600 font-medium">
                       รวม {sheetData.length} รายการ
                     </div>
-                    <div className="flex space-x-4">
-                      <span className="text-orange-600 font-medium">
+                    <div className="flex space-x-6">
+                      <span className="text-orange-600 font-semibold">
                         ยังไม่จ่าย: {sheetData.filter(s => !s.paymentStatus.includes('จ่าย')).length}
                       </span>
-                      <span className="text-green-600 font-medium">
+                      <span className="text-green-600 font-semibold">
                         จ่ายแล้ว: {sheetData.filter(s => s.paymentStatus.includes('จ่าย')).length}
                       </span>
                     </div>
@@ -823,33 +823,33 @@ export default function TableBookingPage() {
         </div>
 
         {/* Status Info */}
-        <div className="fixed top-4 right-2 sm:right-4 bg-black bg-opacity-50 text-white p-2 sm:p-4 rounded-lg text-xs sm:text-sm max-w-48 sm:max-w-none">
-          <div>จองแล้ว: {sheetData.length} รายการ</div>
-          <div>จ่ายแล้ว: {sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length} รายการ</div>
-          <div className="text-xs mt-1 sm:mt-2 text-gray-300 hidden sm:block">
+        <div className="fixed top-4 right-2 sm:right-4 bg-black bg-opacity-50 text-white p-3 sm:p-5 rounded-lg text-sm sm:text-base max-w-52 sm:max-w-none">
+          <div className="font-medium">จองแล้ว: {sheetData.length} รายการ</div>
+          <div className="font-medium">จ่ายแล้ว: {sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length} รายการ</div>
+          <div className="text-xs mt-2 text-gray-300 hidden sm:block font-light">
             อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
           </div>
-          <div className="mt-1 sm:mt-2 space-y-1">
-            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
-              <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 border border-white/20"></div>
-                <span className="text-xs sm:text-sm">โต๊ะว่าง</span>
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-purple-400 border border-white/20"></div>
+                <span className="text-sm font-medium">โต๊ะว่าง</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{65 - tables.filter(t => t.is_booked).length}</span>
+              <span className="text-sm font-semibold">{65 - tables.filter(t => t.is_booked).length}</span>
             </div>
-            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
-              <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 border border-white/20"></div>
-                <span className="text-xs sm:text-sm">จองแล้ว</span>
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-orange-500 border border-white/20"></div>
+                <span className="text-sm font-medium">จองแล้ว</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{sheetData.filter((entry: any) => !entry.paymentStatus?.includes('จ่าย')).length}</span>
+              <span className="text-sm font-semibold">{sheetData.filter((entry: any) => !entry.paymentStatus?.includes('จ่าย')).length}</span>
             </div>
-            <div className="flex items-center justify-between space-x-1 sm:space-x-2">
-              <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border border-white/20"></div>
-                <span className="text-xs sm:text-sm">จ่ายแล้ว</span>
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-green-500 border border-white/20"></div>
+                <span className="text-sm font-medium">จ่ายแล้ว</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length}</span>
+              <span className="text-sm font-semibold">{sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length}</span>
             </div>
           </div>
         </div>
