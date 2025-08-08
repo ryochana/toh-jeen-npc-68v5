@@ -25,13 +25,13 @@ export default function DraggableTable({
 
   const getTableColor = () => {
     if (!table?.is_booked) return 'bg-purple-400 hover:bg-purple-500'
-    if (table.booking?.payment_status === 'paid') return 'bg-green-500 hover:bg-green-600'
+    if (table.booking?.paymentStatus?.includes('จ่าย')) return 'bg-green-500 hover:bg-green-600'
     return 'bg-orange-500 hover:bg-orange-600'
   }
 
   const getStatusText = () => {
     if (!table?.is_booked) return 'ว่าง'
-    if (table.booking?.payment_status === 'paid') return 'จ่ายแล้ว'
+    if (table.booking?.paymentStatus?.includes('จ่าย')) return 'จ่ายแล้ว'
     return 'จองแล้ว'
   }
 
@@ -74,8 +74,9 @@ export default function DraggableTable({
       onMouseLeave={handleMouseUp}
       onClick={handleClick}
       className={`
-        absolute w-18 h-14 sm:w-20 sm:h-16 text-white font-bold text-xs 
-        transition-all border border-white/20 flex flex-col items-center justify-center p-1
+        absolute w-14 h-16 sm:w-16 sm:h-20 text-white font-bold text-xs 
+        transition-all border border-white/20 flex flex-col items-center justify-center
+        rounded-lg shadow-lg p-1
         ${getTableColor()}
         ${isAdmin ? 'cursor-move hover:scale-105' : 'cursor-pointer'}
         ${isDragging ? 'z-50 scale-110 shadow-2xl' : 'z-10'}
@@ -92,12 +93,18 @@ export default function DraggableTable({
       }
     >
       <div className="text-xs font-bold">โต๊ะ {tableNumber}</div>
-      <div className="text-xs text-center leading-tight overflow-hidden">
-        {table?.is_booked ? table.booking?.guest_name?.slice(0, 7) || 'ไม่ระบุ' : 'ว่าง'}
+      <div className="text-xs text-center leading-tight overflow-hidden px-1">
+        {table?.is_booked ? (
+          table.booking?.guestName?.slice(0, 8) || 'ไม่ระบุชื่อ'
+        ) : (
+          'ว่าง'
+        )}
       </div>
-      <div className="text-xs opacity-80">{getStatusText()}</div>
+      <div className="text-xs opacity-90 text-center">
+        {getStatusText()}
+      </div>
       {isAdmin && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center">
+        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center">
           📌
         </div>
       )}

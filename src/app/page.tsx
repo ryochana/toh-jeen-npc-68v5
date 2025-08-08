@@ -1,53 +1,56 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { type TableBooking } from '@/lib/supabase'
-import { fetchSheetData, convertToTableBookings, type SheetBooking } from '@/lib/googleSheets'
+import { fetchSheetData, type SheetBooking } from '@/lib/googleSheets'
 import AdminLogin from '@/components/AdminLogin'
 import DraggableTable from '@/components/DraggableTable'
+import SheetBookingForm from '@/components/SheetBookingForm'
 
 interface TableInfo {
   table_number: number
   zone: 'inside' | 'outside'
   position: { x: number; y: number }
   is_booked: boolean
-  booking?: TableBooking
+  booking?: SheetBooking
 }
 
 export default function TableBookingPage() {
   const [tables, setTables] = useState<TableInfo[]>([])
-  const [bookings, setBookings] = useState<TableBooking[]>([])
-  const [selectedTable, setSelectedTable] = useState<number | null>(null)
-  const [showBookingForm, setShowBookingForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isDragMode, setIsDragMode] = useState(false)
   const [sheetData, setSheetData] = useState<SheetBooking[]>([])
   const [sortBy, setSortBy] = useState<'table_number' | 'booking_date' | 'payment_date' | 'payment_status'>('payment_status')
+  const [showSheetForm, setShowSheetForm] = useState(false)
+  const [selectedSheetEntry, setSelectedSheetEntry] = useState<SheetBooking | null>(null)
+  const [selectedTable, setSelectedTable] = useState<number | null>(null)
+  const [showTableModal, setShowTableModal] = useState(false)
 
   const initializeTables = (): TableInfo[] => {
     const tableData: TableInfo[] = []
     
     // กำหนดตำแหน่งเริ่มต้นของโต๊ะแต่ละโต๊ะ
     const getInitialPosition = (tableNum: number) => {
-      if (tableNum <= 27) {
-        // โซนซ้าย (1-27) - 3 คอลัมน์ 9 แถว
-        const row = Math.floor((tableNum - 1) / 3)
-        const col = (tableNum - 1) % 3
-        return { x: col * 80 + 20, y: row * 70 + 100 }
-      } else if (tableNum <= 41) {
-        // โซนกลาง (28-41) - 2 คอลัมน์ 7 แถว
-        const adjustedNum = tableNum - 28
-        const row = Math.floor(adjustedNum / 2)
-        const col = adjustedNum % 2
-        return { x: col * 80 + 300, y: row * 70 + 150 }
+      if (tableNum <= 41) {
+        // โซนด้านใน (1-41) - อยู่ด้านซ้าย จัดเรียง 7 คอลัมน์
+        const tablesPerRow = 7
+        const row = Math.floor((tableNum - 1) / tablesPerRow)
+        const col = (tableNum - 1) % tablesPerRow
+        return { 
+          x: col * 70 + 50,   // เพิ่มระยะห่างเป็น 70px
+          y: row * 80 + 140   // เพิ่มระยะห่างเป็น 80px
+        }
       } else {
-        // โซนขวา (42-62) - 3 คอลัมน์ 7 แถว
+        // โซนด้านนอก (42-65) - อยู่ด้านขวา
         const adjustedNum = tableNum - 42
-        const row = Math.floor(adjustedNum / 3)
-        const col = adjustedNum % 3
-        return { x: col * 80 + 500, y: row * 70 + 100 }
+        const tablesPerRow = 6
+        const row = Math.floor(adjustedNum / tablesPerRow)
+        const col = adjustedNum % tablesPerRow
+        return { 
+          x: col * 70 + 600,  // เลื่อนไปขวามากขึ้นเป็น 600
+          y: row * 80 + 140   // เพิ่มระยะห่างเป็น 80px
+        }
       }
     }
     
@@ -80,13 +83,14 @@ export default function TableBookingPage() {
       console.log(`Loaded ${sheetData.length} sheet entries:`, sheetData)
       setSheetData(sheetData) // เก็บข้อมูล Sheet ต้นฉบับไว้แสดงผล
       
-      // แปลงข้อมูลจาก Sheet เป็น format ที่ใช้ในแอป
-      // เนื่องจาก 1 entry อาจมีหลายโต๊ะ จึงต้อง flatten
-      const convertedBookings = sheetData.flatMap(convertToTableBookings)
-      setBookings(convertedBookings)
-      
+      // อัปเดตตารางโต๊ะโดยใช้ข้อมูลจาก Google Sheets
       const updatedTables = initializeTables().map(table => {
-        const booking = convertedBookings.find(b => b.table_number === table.table_number)
+        // หาการจองในแต่ละ entry ที่มีโต๊ะนี้
+        const booking = sheetData.find(entry => {
+          const tableNumbers = entry.tableNumbers?.split(',').map((t: string) => parseInt(t.trim())) || []
+          return tableNumbers.includes(table.table_number)
+        })
+        
         return {
           ...table,
           is_booked: !!booking,
@@ -109,7 +113,7 @@ export default function TableBookingPage() {
       // ผู้เยี่ยมชมดูข้อมูลได้อย่างเดียว
       const table = tables.find(t => t.table_number === tableNumber)
       if (table?.is_booked) {
-        alert(`โต๊ะ ${tableNumber}\nผู้จอง: ${table.booking?.guest_name}\nสถานะ: ${table.booking?.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}`)
+        alert(`โต๊ะ ${tableNumber}\nผู้จอง: ${table.booking?.guestName}\nสถานะ: ${table.booking?.paymentStatus?.includes('จ่าย') ? 'จ่ายแล้ว' : 'จองแล้ว'}`)
       } else {
         alert(`โต๊ะ ${tableNumber} ยังว่างอยู่`)
       }
@@ -118,19 +122,67 @@ export default function TableBookingPage() {
     
     // แอดมินสามารถแก้ไขได้
     setSelectedTable(tableNumber)
-    setShowBookingForm(true)
+    setShowTableModal(true)
   }
 
   const handlePositionChange = (tableNumber: number, newPosition: { x: number; y: number }) => {
     if (!isAdmin) return
     
-    setTables(prevTables => 
-      prevTables.map(table => 
-        table.table_number === tableNumber 
-          ? { ...table, position: newPosition }
-          : table
-      )
-    )
+    // ระบบดันโต๊ะและ snap to grid
+    const snapToGrid = (pos: { x: number; y: number }) => {
+      const gridSize = 70 // เพิ่มขนาด grid ให้เหมาะกับระยะห่างใหม่
+      return {
+        x: Math.round(pos.x / gridSize) * gridSize,
+        y: Math.round(pos.y / gridSize) * gridSize
+      }
+    }
+    
+    // ตรวจสอบการชนกันและดันโต๊ะอื่น
+    const checkCollisions = (movingTable: number, targetPos: { x: number; y: number }) => {
+      const tableWidth = 70  // ขนาดโต๊ะใหม่
+      const tableHeight = 80
+      const buffer = 15      // เพิ่มระยะห่าง buffer
+      
+      const updatedTables = [...tables]
+      const movingTableIndex = updatedTables.findIndex(t => t.table_number === movingTable)
+      if (movingTableIndex === -1) return updatedTables
+      
+      // อัปเดตตำแหน่งของโต๊ะที่ย้าย
+      updatedTables[movingTableIndex].position = targetPos
+      
+      // ตรวจสอบการชนกับโต๊ะอื่น
+      for (let i = 0; i < updatedTables.length; i++) {
+        if (i === movingTableIndex) continue
+        
+        const otherTable = updatedTables[i]
+        const dx = Math.abs(targetPos.x - otherTable.position.x)
+        const dy = Math.abs(targetPos.y - otherTable.position.y)
+        
+        // ถ้าชนกัน ให้ดันโต๊ะที่ชน
+        if (dx < tableWidth && dy < tableHeight) {
+          const pushDirection = {
+            x: targetPos.x > otherTable.position.x ? -1 : 1,
+            y: targetPos.y > otherTable.position.y ? -1 : 1
+          }
+          
+          // คำนวณตำแหน่งใหม่ของโต๊ะที่ถูกดัน
+          const newPushedPos = {
+            x: otherTable.position.x + pushDirection.x * (tableWidth + buffer),
+            y: otherTable.position.y + pushDirection.y * (tableHeight + buffer)
+          }
+          
+          // Snap to grid
+          updatedTables[i].position = snapToGrid(newPushedPos)
+        }
+      }
+      
+      return updatedTables
+    }
+    
+    const snappedPosition = snapToGrid(newPosition)
+    const updatedTables = checkCollisions(tableNumber, snappedPosition)
+    
+    setTables(updatedTables)
   }
 
   const handleLogin = (adminStatus: boolean) => {
@@ -150,6 +202,105 @@ export default function TableBookingPage() {
     setIsLoggedIn(false) // แสดงหน้า login
   }
 
+  const handleSheetEntryClick = (entry: SheetBooking) => {
+    if (!isAdmin) {
+      // แสดงข้อมูลสำหรับผู้เยี่ยมชม
+      alert(`ข้อมูลการจอง:\n\nชื่อ: ${entry.guestName}\nโต๊ะ: ${entry.tableNumbers}\nสถานะ: ${entry.paymentStatus || 'ยังไม่กรอก'}\nเบอร์: ${entry.phoneNumber || '-'}`)
+      return
+    }
+    
+    // แอดมินสามารถแก้ไขได้
+    setSelectedSheetEntry(entry)
+    setShowSheetForm(true)
+  }
+
+  const handleSheetSubmit = async (data: SheetBooking) => {
+    if (!isAdmin) {
+      alert('ไม่มีสิทธิ์ในการแก้ไขข้อมูล')
+      return
+    }
+
+    try {
+      console.log('Submitting sheet data:', data)
+      
+      const response = await fetch('/api/sheets-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล')
+      }
+
+      alert('บันทึกข้อมูลสำเร็จ!')
+      
+      // รีเฟรชข้อมูลหลังจากบันทึก
+      setTimeout(() => {
+        loadBookings()
+      }, 1000)
+      
+      setShowSheetForm(false)
+      setSelectedSheetEntry(null)
+    } catch (error) {
+      console.error('Error saving sheet data:', error)
+      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (error as Error).message)
+    }
+  }
+
+  const handleSheetDelete = async (orderNumber: number) => {
+    if (!isAdmin) {
+      alert('ไม่มีสิทธิ์ในการลบข้อมูล')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/sheets-update?orderNumber=${orderNumber}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'เกิดข้อผิดพลาดในการลบข้อมูล')
+      }
+
+      alert('ลบข้อมูลสำเร็จ!')
+      
+      // รีเฟรชข้อมูลหลังจากลบ
+      setTimeout(() => {
+        loadBookings()
+      }, 1000)
+    } catch (error) {
+      console.error('Error deleting sheet data:', error)
+      alert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + (error as Error).message)
+    }
+  }
+
+  const addNewSheetEntry = () => {
+    if (!isAdmin) {
+      alert('ไม่มีสิทธิ์ในการเพิ่มข้อมูล')
+      return
+    }
+    
+    // หาหมายเลขลำดับถัดไป
+    const nextOrderNumber = Math.max(...sheetData.map(s => s.orderNumber), 0) + 1
+    
+    setSelectedSheetEntry({
+      orderNumber: nextOrderNumber,
+      guestName: '',
+      partySize: 8,
+      paymentStatus: '',
+      tableNumbers: '',
+      receiver: '',
+      paymentDate: '',
+      phoneNumber: ''
+    })
+    setShowSheetForm(true)
+  }
+
   const resetTablePositions = () => {
     if (!isAdmin) return
     
@@ -165,106 +316,6 @@ export default function TableBookingPage() {
       setTables(resetTables)
     }
   }
-  const handleBooking = async (bookingData: Omit<TableBooking, 'id' | 'created_at'>) => {
-    if (!isAdmin) {
-      alert('ไม่มีสิทธิ์ในการจองโต๊ะ')
-      return
-    }
-    
-    // แสดงข้อความแจ้งเตือนให้ผู้ใช้ไปแก้ไขใน Google Sheets
-    const sheetUrl = `https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit`
-    
-    const confirmMessage = `
-กรุณาไปแก้ไขข้อมูลใน Google Sheets โดยตรง:
-
-โต๊ะ: ${bookingData.table_number}
-ชื่อ: ${bookingData.guest_name}
-เบอร์: ${bookingData.phone_number}
-จำนวนคน: ${bookingData.party_size}
-สถานะ: ${bookingData.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองแล้ว'}
-
-คลิก OK เพื่อเปิด Google Sheets ในแท็บใหม่
-    `.trim()
-    
-    if (confirm(confirmMessage)) {
-      window.open(sheetUrl, '_blank')
-      
-      // รีเฟรชข้อมูลหลังจาก 3 วินาที
-      setTimeout(() => {
-        loadBookings()
-      }, 3000)
-    }
-    
-    setShowBookingForm(false)
-    setSelectedTable(null)
-  }
-
-  const handleCancelBooking = async (tableNumber: number) => {
-    if (!isAdmin) {
-      alert('ไม่มีสิทธิ์ในการยกเลิกการจอง')
-      return
-    }
-    
-    const sheetUrl = `https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit`
-    
-    const confirmMessage = `
-กรุณาไปลบข้อมูลโต๊ะ ${tableNumber} ใน Google Sheets โดยตรง
-
-คลิก OK เพื่อเปิด Google Sheets ในแท็บใหม่
-    `.trim()
-    
-    if (confirm(confirmMessage)) {
-      window.open(sheetUrl, '_blank')
-      
-      // รีเฟรชข้อมูลหลังจาก 3 วินาที
-      setTimeout(() => {
-        loadBookings()
-      }, 3000)
-    }
-  }
-
-  const exportToExcel = async () => {
-    try {
-      // รีเฟรชข้อมูลก่อน export
-      await loadBookings()
-      
-      // ใช้ข้อมูลจาก state โดยตรง
-      const exportData = bookings.map(booking => ({
-        'หมายเลขโต๊ะ': booking.table_number,
-        'ชื่อผู้จอง': booking.guest_name,
-        'เบอร์โทรศัพท์': booking.phone_number,
-        'จำนวนคน': booking.party_size,
-        'วันที่จอง': booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.booking_date).toLocaleTimeString('th-TH') : '-',
-        'เวลาจ่ายเงิน': booking.payment_date ? new Date(booking.payment_date).toLocaleDateString('th-TH') + ' ' + new Date(booking.payment_date).toLocaleTimeString('th-TH') : '-',
-        'โซน': booking.zone === 'inside' ? 'ด้านในหอประชุม' : 'ด้านนอกหอประชุม',
-        'สถานะการชำระ': booking.payment_status === 'paid' ? 'จ่ายแล้ว' : 'จองเฉยๆ',
-        'หมายเหตุ': booking.notes || '-'
-      }))
-      
-      // สร้างไฟล์ CSV
-      const csvContent = "data:text/csv;charset=utf-8," 
-        + Object.keys(exportData[0] || {}).join(',') + '\n'
-        + exportData.map(row => Object.values(row).join(',')).join('\n')
-      
-      const encodedUri = encodeURI(csvContent)
-      const link = document.createElement("a")
-      link.setAttribute("href", encodedUri)
-      
-      const now = new Date()
-      const timeString = `${now.toLocaleDateString('th-TH').replace(/\//g, '-')}_${now.toLocaleTimeString('th-TH').replace(/:/g, '-')}`
-      link.setAttribute("download", `รายการจองโต๊ะ_${timeString}.csv`)
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      alert(`Export สำเร็จ! ข้อมูล ${bookings.length} รายการ`)
-    } catch (error) {
-      console.error('Error exporting:', error)
-      alert('เกิดข้อผิดพลาดในการ export ข้อมูล')
-    }
-  }
-
   useEffect(() => {
     // เริ่มต้นให้แสดงแบบผู้เยี่ยมชมเสมอ
     setIsLoggedIn(true)
@@ -429,12 +480,6 @@ export default function TableBookingPage() {
             {isAdmin && (
               <>
                 <button
-                  onClick={exportToExcel}
-                  className="bg-green-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
-                >
-                  📊 Export CSV
-                </button>
-                <button
                   onClick={() => window.open('https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit', '_blank')}
                   className="bg-purple-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition-colors font-bold text-sm sm:text-base"
                 >
@@ -479,24 +524,43 @@ export default function TableBookingPage() {
         </div>
 
         {/* Table Layout - Draggable System */}
-        <div className="max-w-7xl mx-auto px-2 sm:px-2">
-          <div className="relative bg-gray-900 bg-opacity-30 rounded-lg p-4 min-h-96" style={{ minHeight: '600px' }}>
+        <div className="w-full px-2 sm:px-4 mb-16">
+          <div className="overflow-x-auto">
+            <div className="relative bg-gray-900 bg-opacity-30 rounded-lg p-4" style={{ minHeight: '700px', width: '1100px', minWidth: '1100px' }}>
             {/* Grid Background (optional visual guide) */}
             {isAdmin && isDragMode && (
               <div className="absolute inset-0 opacity-20 pointer-events-none" 
                    style={{
                      backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-                     backgroundSize: '20px 20px'
+                     backgroundSize: '70px 80px'
                    }}
               />
             )}
             
-            {/* Zone Labels */}
-            <div className="absolute top-2 left-4 text-purple-300 font-bold text-xs sm:text-sm">
-              โซนด้านใน
+            {/* Zone Inside Box - ด้านซ้าย */}
+            <div className="absolute border-2 border-purple-400 border-dashed rounded-lg bg-purple-900 bg-opacity-20" 
+                 style={{
+                   left: '30px',
+                   top: '120px', 
+                   width: '520px',
+                   height: '500px'
+                 }}>
+              <div className="absolute -top-6 left-2 text-purple-300 font-bold text-sm bg-gray-900 px-2 rounded">
+                🏛️ โซนด้านใน (1-41)
+              </div>
             </div>
-            <div className="absolute top-2 right-4 text-orange-300 font-bold text-xs sm:text-sm">
-              โซนด้านนอก
+            
+            {/* Zone Outside Box - ด้านขวา */}
+            <div className="absolute border-2 border-orange-400 border-dashed rounded-lg bg-orange-900 bg-opacity-20" 
+                 style={{
+                   left: '580px',
+                   top: '120px',
+                   width: '450px', 
+                   height: '500px'
+                 }}>
+              <div className="absolute -top-6 left-2 text-orange-300 font-bold text-sm bg-gray-900 px-2 rounded">
+                🌟 โซนด้านนอก (42-65)
+              </div>
             </div>
             
             {/* Stage */}
@@ -530,6 +594,7 @@ export default function TableBookingPage() {
                 : '👁️ คลิกโต๊ะเพื่อดูข้อมูล'
               }
             </div>
+          </div>
           </div>
         </div>
 
@@ -578,18 +643,30 @@ export default function TableBookingPage() {
                 📝 ข้อมูลจาก Google Sheets ({sheetData.length} รายการ)
               </h2>
               
-              {/* Sort Options */}
               <div className="flex items-center space-x-2">
-                <span className="text-yellow-300 text-sm">เรียงตาม:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date' | 'payment_status')}
-                  className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                >
-                  <option value="payment_status">สถานะการจ่าย</option>
-                  <option value="table_number">หมายเลขโต๊ะ</option>
-                  <option value="payment_date">เวลาจ่ายเงิน</option>
-                </select>
+                {/* Add New Button */}
+                {isAdmin && (
+                  <button
+                    onClick={addNewSheetEntry}
+                    className="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors text-sm font-bold"
+                  >
+                    ➕ เพิ่มใหม่
+                  </button>
+                )}
+                
+                {/* Sort Options */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-yellow-300 text-sm">เรียงตาม:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date' | 'payment_status')}
+                    className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    <option value="payment_status">สถานะการจ่าย</option>
+                    <option value="table_number">หมายเลขโต๊ะ</option>
+                    <option value="payment_date">เวลาจ่ายเงิน</option>
+                  </select>
+                </div>
               </div>
             </div>
             
@@ -649,9 +726,12 @@ export default function TableBookingPage() {
                           <tr 
                             key={entry.orderNumber}
                             className={`
-                              hover:bg-gray-50 transition-colors
+                              hover:bg-gray-50 transition-colors cursor-pointer
                               ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                              ${isAdmin ? 'hover:bg-blue-50' : ''}
                             `}
+                            onClick={() => handleSheetEntryClick(entry)}
+                            title={isAdmin ? 'คลิกเพื่อแก้ไข' : 'คลิกเพื่อดูรายละเอียด'}
                           >
                             <td className="px-3 py-2 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
@@ -719,230 +799,10 @@ export default function TableBookingPage() {
           </div>
         </div>
 
-        {/* Booking List */}
-        <div className="mt-8 sm:mt-16 mb-20">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-yellow-300 text-xl sm:text-2xl font-bold">
-                📋 รายชื่อผู้จอง ({bookings.length} โต๊ะ)
-              </h2>
-              
-              {/* Sort Options */}
-              <div className="flex items-center space-x-2">
-                <span className="text-yellow-300 text-sm">เรียงตาม:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'table_number' | 'booking_date' | 'payment_date')}
-                  className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                >
-                  <option value="table_number">หมายเลขโต๊ะ</option>
-                  <option value="booking_date">เวลาจอง</option>
-                  <option value="payment_date">เวลาจ่ายเงิน</option>
-                </select>
-              </div>
-            </div>
-            
-            {bookings.length === 0 ? (
-              <div className="text-center text-gray-300 py-8">
-                ยังไม่มีการจองโต๊ะ
-              </div>
-            ) : (
-              <div className="bg-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden">
-                <div className="max-h-96 overflow-y-auto">
-                  <table className="w-full table-auto">
-                    <thead className="bg-gray-100 sticky top-0">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          โต๊ะ
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          ชื่อผู้จอง
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
-                          เบอร์โทร
-                        </th>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          จำนวน
-                        </th>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
-                          โซน
-                        </th>
-                        <th className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          สถานะ
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
-                          เวลาจอง
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden xl:table-cell">
-                          เวลาจ่ายเงิน
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
-                          หมายเหตุ
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {bookings
-                        .sort((a, b) => {
-                          if (sortBy === 'table_number') {
-                            return a.table_number - b.table_number
-                          } else if (sortBy === 'booking_date') {
-                            return new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
-                          } else if (sortBy === 'payment_date') {
-                            // จ่ายแล้วขึ้นก่อน แล้วเรียงตามเวลาจ่าย
-                            if (a.payment_status === 'paid' && b.payment_status === 'paid') {
-                              if (a.payment_date && b.payment_date) {
-                                return new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
-                              }
-                              return 0
-                            } else if (a.payment_status === 'paid') {
-                              return -1
-                            } else if (b.payment_status === 'paid') {
-                              return 1
-                            }
-                            return a.table_number - b.table_number
-                          }
-                          return 0
-                        })
-                        .map((booking, index) => (
-                          <tr 
-                            key={booking.table_number}
-                            className={`
-                              hover:bg-gray-50 transition-colors cursor-pointer
-                              ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                            `}
-                            onClick={() => {
-                              if (isAdmin) {
-                                setSelectedTable(booking.table_number)
-                                setShowBookingForm(true)
-                              }
-                            }}
-                          >
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className={`
-                                  w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm
-                                  ${booking.payment_status === 'paid' ? 'bg-green-500' : 'bg-orange-500'}
-                                `}>
-                                  {booking.table_number}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {booking.guest_name}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap hidden sm:table-cell">
-                              <div className="text-sm text-gray-500">
-                                {booking.phone_number}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-center">
-                              <div className="text-sm text-gray-900">
-                                {booking.party_size} คน
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-center hidden md:table-cell">
-                              <span className={`
-                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                ${booking.zone === 'inside' 
-                                  ? 'bg-purple-100 text-purple-800' 
-                                  : 'bg-blue-100 text-blue-800'
-                                }
-                              `}>
-                                {booking.zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-center">
-                              <span className={`
-                                inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                ${booking.payment_status === 'paid' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-orange-100 text-orange-800'
-                                }
-                              `}>
-                                {booking.payment_status === 'paid' ? '✅ จ่ายแล้ว' : '📝 จองแล้ว'}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 hidden lg:table-cell">
-                              <div className="text-xs text-gray-500">
-                                {new Date(booking.booking_date).toLocaleDateString('th-TH', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                                <br />
-                                {new Date(booking.booking_date).toLocaleTimeString('th-TH', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 hidden xl:table-cell">
-                              <div className="text-xs text-gray-500">
-                                {booking.payment_date ? (
-                                  <>
-                                    {new Date(booking.payment_date).toLocaleDateString('th-TH', {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric'
-                                    })}
-                                    <br />
-                                    {new Date(booking.payment_date).toLocaleTimeString('th-TH', {
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </>
-                                ) : '-'}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 hidden lg:table-cell">
-                              <div className="text-sm text-gray-500 max-w-xs truncate" title={booking.notes || ''}>
-                                {booking.notes || '-'}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                
-                {/* Mobile view additional info */}
-                <div className="sm:hidden p-4 bg-gray-50 border-t">
-                  <div className="text-xs text-gray-600">
-                    💡 แตะแถวเพื่อดูรายละเอียดเพิ่มเติม (แอดมินแก้ไขใน Google Sheets)
-                    <br />
-                    📅 เรียงลำดับ: {sortBy === 'table_number' ? 'หมายเลขโต๊ะ' : sortBy === 'booking_date' ? 'เวลาจอง' : 'เวลาจ่ายเงิน'}
-                  </div>
-                </div>
-                
-                {/* Table summary */}
-                <div className="px-4 py-3 bg-gray-50 border-t">
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="text-gray-600">
-                      รวม {bookings.length} โต๊ะ จาก 65 โต๊ะ
-                    </div>
-                    <div className="flex space-x-4">
-                      <span className="text-orange-600 font-medium">
-                        จองแล้ว: {bookings.filter(b => b.payment_status === 'booked').length}
-                      </span>
-                      <span className="text-green-600 font-medium">
-                        จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Status Info */}
         <div className="fixed top-4 right-2 sm:right-4 bg-black bg-opacity-50 text-white p-2 sm:p-4 rounded-lg text-xs sm:text-sm max-w-48 sm:max-w-none">
-          <div>จองแล้ว: {bookings.length} โต๊ะ</div>
-          <div>จ่ายแล้ว: {bookings.filter(b => b.payment_status === 'paid').length} โต๊ะ</div>
+          <div>จองแล้ว: {sheetData.length} รายการ</div>
+          <div>จ่ายแล้ว: {sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length} รายการ</div>
           <div className="text-xs mt-1 sm:mt-2 text-gray-300 hidden sm:block">
             อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
           </div>
@@ -952,200 +812,119 @@ export default function TableBookingPage() {
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-400 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">โต๊ะว่าง</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{65 - bookings.length}</span>
+              <span className="text-xs sm:text-sm font-bold">{65 - tables.filter(t => t.is_booked).length}</span>
             </div>
             <div className="flex items-center justify-between space-x-1 sm:space-x-2">
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">จองแล้ว</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'booked').length}</span>
+              <span className="text-xs sm:text-sm font-bold">{sheetData.filter((entry: any) => !entry.paymentStatus?.includes('จ่าย')).length}</span>
             </div>
             <div className="flex items-center justify-between space-x-1 sm:space-x-2">
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border border-white/20"></div>
                 <span className="text-xs sm:text-sm">จ่ายแล้ว</span>
               </div>
-              <span className="text-xs sm:text-sm font-bold">{bookings.filter(b => b.payment_status === 'paid').length}</span>
+              <span className="text-xs sm:text-sm font-bold">{sheetData.filter((entry: any) => entry.paymentStatus?.includes('จ่าย')).length}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal สำหรับจองโต๊ะ */}
-      {showBookingForm && selectedTable && isAdmin && (
-        <BookingModal
+      {/* Modal สำหรับแก้ไขข้อมูล Google Sheets */}
+      {showSheetForm && selectedSheetEntry && isAdmin && (
+        <SheetBookingForm
+          existingBooking={selectedSheetEntry}
+          onSubmit={handleSheetSubmit}
+          onClose={() => {
+            setShowSheetForm(false)
+            setSelectedSheetEntry(null)
+          }}
+          onDelete={handleSheetDelete}
+        />
+      )}
+
+      {/* Modal สำหรับจัดการโต๊ะ */}
+      {showTableModal && selectedTable && isAdmin && (
+        <TableModal
           tableNumber={selectedTable}
           zone={selectedTable <= 41 ? 'inside' : 'outside'}
-          existingBooking={tables.find(t => t.table_number === selectedTable)?.booking}
-          onSubmit={handleBooking}
+          table={tables.find(t => t.table_number === selectedTable)}
           onClose={() => {
-            setShowBookingForm(false)
+            setShowTableModal(false)
             setSelectedTable(null)
           }}
-          onDelete={handleCancelBooking}
         />
       )}
     </div>
   )
 }
 
-function BookingModal({ 
+function TableModal({ 
   tableNumber, 
   zone, 
-  onSubmit, 
-  onClose,
-  onDelete,
-  existingBooking
+  table,
+  onClose
 }: {
   tableNumber: number
   zone: 'inside' | 'outside'
-  onSubmit: (data: Omit<TableBooking, 'id' | 'created_at'>) => void
+  table: any
   onClose: () => void
-  onDelete: (tableNumber: number) => void
-  existingBooking?: TableBooking
 }) {
-  const [formData, setFormData] = useState({
-    guest_name: existingBooking?.guest_name || '',
-    phone_number: existingBooking?.phone_number || '',
-    party_size: existingBooking?.party_size || 8,
-    payment_status: (existingBooking?.payment_status || 'booked') as 'booked' | 'paid',
-    notes: existingBooking?.notes || ''
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.guest_name.trim() || !formData.phone_number.trim()) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน')
-      return
-    }
-
-    onSubmit({
-      table_number: tableNumber,
-      guest_name: formData.guest_name.trim(),
-      phone_number: formData.phone_number.trim(),
-      party_size: formData.party_size,
-      payment_status: formData.payment_status,
-      booking_date: existingBooking?.booking_date || new Date().toISOString(),
-      notes: formData.notes.trim(),
-      zone
-    })
+  const handleEditInSheets = () => {
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/1xnBYAKJWQ1dLpCuHm0d4-Z85Q10suWL8D7pF5YLjs40/edit'
+    window.open(sheetUrl, '_blank')
+    onClose()
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
-          {existingBooking ? 'แก้ไข' : 'จอง'}โต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4 text-gray-800">
+          โต๊ะ {tableNumber} ({zone === 'inside' ? 'ด้านใน' : 'ด้านนอก'})
         </h3>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">ชื่อผู้จอง *</label>
-            <input
-              type="text"
-              value={formData.guest_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, guest_name: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-              placeholder="กรอกชื่อผู้จอง"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">เบอร์โทรศัพท์ *</label>
-            <input
-              type="tel"
-              value={formData.phone_number}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-              placeholder="กรอกเบอร์โทรศัพท์"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">จำนวนคน</label>
-            <input
-              type="number"
-              min="1"
-              max="12"
-              value={formData.party_size}
-              onChange={(e) => setFormData(prev => ({ ...prev, party_size: parseInt(e.target.value) }))}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">สถานะการชำระ *</label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="payment_status"
-                  value="booked"
-                  checked={formData.payment_status === 'booked'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, payment_status: e.target.value as 'booked' | 'paid' }))}
-                  className="mr-2"
-                />
-                <span className="text-orange-600">จองเฉยๆ</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="payment_status"
-                  value="paid"
-                  checked={formData.payment_status === 'paid'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, payment_status: e.target.value as 'booked' | 'paid' }))}
-                  className="mr-2"
-                />
-                <span className="text-green-600">จ่ายแล้ว</span>
-              </label>
+        <div className="space-y-4">
+          {table?.is_booked ? (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-700 mb-2">ข้อมูลการจอง:</h4>
+              <div className="space-y-1 text-sm">
+                <div><strong>ชื่อผู้จอง:</strong> {table.booking?.guestName || '-'}</div>
+                <div><strong>เบอร์โทร:</strong> {table.booking?.phoneNumber || '-'}</div>
+                <div><strong>จำนวนคน:</strong> {table.booking?.partySize || '-'} คน</div>
+                <div><strong>สถานะ:</strong> 
+                  <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                    table.booking?.paymentStatus?.includes('จ่าย') 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    {table.booking?.paymentStatus?.includes('จ่าย') ? 'จ่ายแล้ว' : 'จองแล้ว'}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">หมายเหตุ</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-              rows={3}
-              placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"
-            />
-          </div>
-          
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 pt-4">
+          ) : (
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-purple-700">โต๊ะนี้ยังว่างอยู่</p>
+            </div>
+          )}
+
+          <div className="flex space-x-4 pt-4">
             <button
-              type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base"
+              className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
             >
-              ยกเลิก
+              ปิด
             </button>
-            {existingBooking && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('คุณต้องการลบการจองนี้หรือไม่?')) {
-                    onDelete(tableNumber)
-                    onClose()
-                  }
-                }}
-                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base"
-              >
-                ลบการจอง
-              </button>
-            )}
             <button
-              type="submit"
-              className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
+              onClick={handleEditInSheets}
+              className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors"
             >
-              {existingBooking ? '📝 แก้ไขใน Google Sheets' : '📝 เพิ่มใน Google Sheets'}
+              📝 แก้ไขใน Google Sheets
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )
